@@ -21,10 +21,13 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.x'
+
+      - name: Verify Node Version
+        run: node -v && npm -v
 
       - name: Install Frontend Dependencies & Build Web
         run: |
@@ -56,10 +59,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.x'
+
+      - name: Verify Node Version
+        run: node -v && npm -v
 
       - name: Install Frontend Dependencies & Build Web
         run: |
