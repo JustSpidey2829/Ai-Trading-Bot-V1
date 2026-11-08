@@ -1,0 +1,88 @@
+name: Build Mobile Apps (APK & IPA)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ==========================================
+  # 1. BUILD ANDROID APK
+  # ==========================================
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies & Build Web
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          npx cap sync android
+
+      - name: Make Gradle Executable
+        run: chmod +x frontend/android/gradlew
+
+      - name: Build Android APK
+        run: |
+          cd frontend/android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Master-Trader-Android-APK
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+
+  # ==========================================
+  # 2. BUILD iOS IPA (UNSIGNED / AD-HOC)
+  # ==========================================
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies & Build Web
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          npx cap sync ios
+
+      - name: Build iOS Archive with Xcode
+        run: |
+          cd frontend/ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath App.xcarchive archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Package Unsigned IPA
+        run: |
+          cd frontend/ios/App
+          mkdir -p Payload
+          cp -r App.xcarchive/Products/Applications/App.app Payload/
+          zip -r AI-Master-Trader.ipa Payload
+          mv AI-Master-Trader.ipa ../../../
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Master-Trader-iOS-IPA
+          path: AI-Master-Trader.ipa
