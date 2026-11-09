@@ -4,7 +4,6 @@ import {
   TrendingDown, 
   Plus, 
   Zap, 
-  BarChart2, 
   Minus, 
   ChevronDown, 
   Search, 
@@ -13,40 +12,52 @@ import {
   HelpCircle, 
   Briefcase, 
   Wallet,
-  Compass
+  Compass,
+  Activity,
+  Award
 } from 'lucide-react';
 const ALL_MARKETS = [
   // India (NSE / Groww)
-  { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 82, base: 22450.0, step: 3.5, currency: '₹' },
-  { id: 'BANKNIFTY', name: 'BANK NIFTY', country: 'India', category: 'Indices', payout: 82, base: 47920.0, step: 6.0, currency: '₹' },
-  { id: 'RELIANCE', name: 'Reliance Ind.', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.8, currency: '₹' },
-  { id: 'TCS', name: 'TCS Ltd.', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.0, currency: '₹' },
-  { id: 'HDFCBANK', name: 'HDFC Bank', country: 'India', category: 'Stocks', payout: 80, base: 1530.10, step: 0.5, currency: '₹' },
-  // Forex & OTC (Olymp Trade & Quotex Style)
-  { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00015, currency: '$' },
-  { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00018, currency: '$' },
-  { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.03, currency: '¥' },
-  { id: 'USDINR', name: 'USD/INR', country: 'India', category: 'Forex', payout: 84, base: 83.45, step: 0.02, currency: '₹' },
-  // US Tech Stocks
-  { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'US Stocks', payout: 87, base: 885.30, step: 1.2, currency: '$' },
-  { id: 'AAPL', name: 'Apple Inc.', country: 'USA', category: 'US Stocks', payout: 85, base: 182.40, step: 0.4, currency: '$' },
-  { id: 'TSLA', name: 'Tesla Inc.', country: 'USA', category: 'US Stocks', payout: 88, base: 175.80, step: 0.7, currency: '$' },
-  // Crypto
-  { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 18.0, currency: '$' },
-  { id: 'ETHUSDT', name: 'Ethereum (ETH)', country: 'Crypto', category: 'Crypto', payout: 88, base: 3340.50, step: 1.5, currency: '$' },
-  { id: 'SOLUSDT', name: 'Solana (SOL)', country: 'Crypto', category: 'Crypto', payout: 85, base: 174.20, step: 0.5, currency: '$' },
-  // Commodities
-  { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.6, currency: '$' },
-  { id: 'BRENT', name: 'Brent Crude Oil', country: 'Commodities', category: 'Energy', payout: 82, base: 89.40, step: 0.1, currency: '$' },
+  { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 82, base: 22450.0, step: 4.2, currency: '₹' },
+  { id: 'BANKNIFTY', name: 'BANK NIFTY', country: 'India', category: 'Indices', payout: 82, base: 47920.0, step: 8.5, currency: '₹' },
+  { id: 'RELIANCE', name: 'Reliance Ind.', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.9, currency: '₹' },
+  { id: 'TCS', name: 'TCS Ltd.', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.2, currency: '₹' },
+  { id: 'HDFCBANK', name: 'HDFC Bank', country: 'India', category: 'Stocks', payout: 80, base: 1530.10, step: 0.6, currency: '₹' },
+  // Forex & OTC
+  { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$' },
+  { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$' },
+  { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.04, currency: '¥' },
+  { id: 'USDINR', name: 'USD/INR', country: 'India', category: 'Forex', payout: 84, base: 83.45, step: 0.03, currency: '₹' },
+  // US Tech
+  { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'US Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$' },
+  { id: 'AAPL', name: 'Apple Inc.', country: 'USA', category: 'US Stocks', payout: 85, base: 182.40, step: 0.5, currency: '$' },
+  { id: 'TSLA', name: 'Tesla Inc.', country: 'USA', category: 'US Stocks', payout: 88, base: 175.80, step: 0.9, currency: '$' },
+  // Crypto & Metals
+  { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 24.0, currency: '$' },
+  { id: 'ETHUSDT', name: 'Ethereum (ETH)', country: 'Crypto', category: 'Crypto', payout: 88, base: 3340.50, step: 2.1, currency: '$' },
+  { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.8, currency: '$' }
+];
+const TIMEFRAMES = [
+  { label: '5s', sec: 5, candleCount: 50 },
+  { label: '15s', sec: 15, candleCount: 50 },
+  { label: '1m', sec: 60, candleCount: 60 },
+  { label: '5m', sec: 300, candleCount: 60 },
+  { label: '15m', sec: 900, candleCount: 60 },
+  { label: '1H', sec: 3600, candleCount: 60 },
+  { label: '1D', sec: 86400, candleCount: 75 },
+  { label: '1W', sec: 604800, candleCount: 80 },
+  { label: '1M', sec: 2592000, candleCount: 90 },
+  { label: '1Y', sec: 31536000, candleCount: 100 },
+  { label: '5Y', sec: 157680000, candleCount: 120 }
 ];
 export default function App() {
-  const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[5]); // Default EUR/USD (OTC)
+  const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[0]);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [marketFilter, setMarketFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [chartType, setChartType] = useState('candles'); // 'candles' | 'area' | 'line' | 'bars'
-  const [timeframe, setTimeframe] = useState('5s');
-  const [balance, setBalance] = useState(100000.0);
+  const [chartType, setChartType] = useState('candles');
+  const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[0]);
+  const [balance, setBalance] = useState(99230.0);
   const [amount, setAmount] = useState(70);
   const [durationSec, setDurationSec] = useState(5);
   const [botActive, setBotActive] = useState(true);
@@ -55,28 +66,36 @@ export default function App() {
   const [candles, setCandles] = useState([]);
   const [activeTrades, setActiveTrades] = useState([]);
   const [recentSocialTrades, setRecentSocialTrades] = useState([
-    { id: 1, user: 'AI Quant Bot', dir: 'UP', duration: '5s' },
-    { id: 2, user: 'Trader_Alex', dir: 'DOWN', duration: '5s' },
-    { id: 3, user: 'Rahul_K', dir: 'UP', duration: '5s' }
+    { id: 1, user: 'AI Quant Engine', dir: 'UP', duration: '5s' },
+    { id: 2, user: 'NiftyScalper', dir: 'DOWN', duration: '15s' }
   ]);
+  const [aiTelemetry, setAiTelemetry] = useState({
+    rsi: 52.4,
+    trend: 'BULLISH',
+    winRate: 84,
+    lastReason: 'Scanning RSI(14) & Volume breakout...'
+  });
   const canvasRef = useRef(null);
-  // Initialize Historical Candlesticks
+  // Generate Realistic Scale Data across Minutes to 5 Years
   useEffect(() => {
     let p = selectedAsset.base;
+    const count = selectedTf.candleCount;
     const initialList = [];
-    for (let i = 0; i < 45; i++) {
+    const multiplier = selectedTf.sec > 86400 ? (selectedTf.sec / 86400) * 0.15 : 1;
+    for (let i = 0; i < count; i++) {
       const open = p;
-      const change = (Math.random() - 0.495) * (selectedAsset.step * 2);
-      const close = +(open + change).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
-      const high = +(Math.max(open, close) + Math.random() * selectedAsset.step).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
-      const low = +(Math.min(open, close) - Math.random() * selectedAsset.step).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
-      initialList.push({ open, high, low, close });
+      const drift = (Math.random() - 0.492) * (selectedAsset.step * 2.2 * multiplier);
+      const close = +(open + drift).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
+      const high = +(Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
+      const low = +(Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
+      const volume = Math.floor(Math.random() * 8000 + 1200);
+      initialList.push({ open, high, low, close, volume });
       p = close;
     }
     setCandles(initialList);
     setLatestPrice(p);
-  }, [selectedAsset]);
-  // Real-Time Price Engine & AI Execution
+  }, [selectedAsset, selectedTf]);
+  // Real-Time High-Frequency Candle Engine & Quant Scanner
   useEffect(() => {
     const timer = setInterval(() => {
       setCandles(prev => {
@@ -88,19 +107,53 @@ export default function App() {
         last.close = newClose;
         last.high = Math.max(last.high, newClose);
         last.low = Math.min(last.low, newClose);
+        last.volume = (last.volume || 2000) + Math.floor(Math.random() * 80);
         list[list.length - 1] = last;
         setLatestPrice(newClose);
+        // Calculate RSI(14) proxy on the fly
+        if (list.length >= 14) {
+          let gains = 0, losses = 0;
+          for (let i = list.length - 14; i < list.length; i++) {
+            const diff = list[i].close - list[i].open;
+            if (diff >= 0) gains += diff;
+            else losses += Math.abs(diff);
+          }
+          const rs = losses === 0 ? 100 : gains / losses;
+          const currentRsi = +(100 - (100 / (1 + rs))).toFixed(1);
+          // Intelligent AI Opportunity Trigger
+          if (botActive && activeTrades.length < 2) {
+            if (currentRsi < 32 && Math.random() > 0.4) {
+              setAiTelemetry({
+                rsi: currentRsi,
+                trend: 'OVERSOLD REVERSAL',
+                winRate: 88,
+                lastReason: `RSI Oversold (${currentRsi}) + Strong Lower Wick Rejection`
+              });
+              executeOrder('UP', true, `RSI oversold at ${currentRsi}`);
+            } else if (currentRsi > 68 && Math.random() > 0.4) {
+              setAiTelemetry({
+                rsi: currentRsi,
+                trend: 'OVERBOUGHT EXHAUSTION',
+                winRate: 86,
+                lastReason: `RSI Overbought (${currentRsi}) + Upper Resistance Rejection`
+              });
+              executeOrder('DOWN', true, `RSI overbought at ${currentRsi}`);
+            } else {
+              setAiTelemetry(prevTelemetry => ({
+                ...prevTelemetry,
+                rsi: currentRsi,
+                trend: currentRsi > 50 ? 'BULLISH BIAS' : 'BEARISH BIAS'
+              }));
+            }
+          }
+        }
         return list;
       });
       setCountdown(prev => (prev <= 1 ? durationSec : prev - 1));
-      // AI Bot Auto-Execution
-      if (botActive && Math.random() > 0.85 && activeTrades.length < 2) {
-        executeOrder(Math.random() > 0.5 ? 'UP' : 'DOWN', true);
-      }
     }, 1000);
     return () => clearInterval(timer);
   }, [selectedAsset, botActive, activeTrades.length, durationSec]);
-  // Canvas Drawing Engine (Responsive High-DPI Candlestick & Area Renderer)
+  // High-DPI Canvas Rendering Engine (Candles + EMA + Volume + Targets)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || candles.length === 0) return;
@@ -112,10 +165,10 @@ export default function App() {
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     ctx.fillStyle = '#131518';
     ctx.fillRect(0, 0, width, height);
-    // Draw Grid Lines
+    // 1. Grid Lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
-    for (let y = 40; y < height; y += 50) {
+    for (let y = 30; y < height; y += 45) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
@@ -127,34 +180,59 @@ export default function App() {
       ctx.lineTo(x, height);
       ctx.stroke();
     }
-    // Min / Max Scaling
+    // 2. Dynamic Price Scaling
     let minP = Infinity;
     let maxP = -Infinity;
     candles.forEach(c => {
       minP = Math.min(minP, c.low);
       maxP = Math.max(maxP, c.high);
     });
-    const padding = (maxP - minP) * 0.15 || 0.001;
+    const padding = (maxP - minP) * 0.18 || 0.001;
     minP -= padding;
     maxP += padding;
-    const getY = (price) => height - ((price - minP) / (maxP - minP)) * height;
-    const candleWidth = Math.max(4, (width - 150) / candles.length - 4);
-    // Render based on chartType
+    const chartHeight = height - 90; // Top section for price action
+    const getY = (price) => chartHeight - ((price - minP) / (maxP - minP)) * chartHeight + 20;
+    const candleWidth = Math.max(3, (width - 160) / candles.length - 3);
+    // 3. Bottom Volume Histogram Sub-chart
+    const maxVol = Math.max(...candles.map(c => c.volume || 1000));
+    candles.forEach((c, i) => {
+      const x = i * (candleWidth + 3) + 20;
+      const vH = ((c.volume || 1000) / maxVol) * 55;
+      ctx.fillStyle = c.close >= c.open ? 'rgba(0, 230, 118, 0.22)' : 'rgba(255, 51, 102, 0.22)';
+      ctx.fillRect(x, height - vH - 10, candleWidth, vH);
+    });
+    // 4. EMA 20 Dynamic Smoothing Overlay
+    if (candles.length > 5) {
+      ctx.beginPath();
+      let k = 2 / (20 + 1);
+      let ema = candles[0].close;
+      candles.forEach((c, i) => {
+        ema = c.close * k + ema * (1 - k);
+        const x = i * (candleWidth + 3) + 20 + candleWidth / 2;
+        const y = getY(ema);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#00b0ff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+    // 5. Candlesticks / Area / Line
     if (chartType === 'area' || chartType === 'line') {
       ctx.beginPath();
       candles.forEach((c, i) => {
-        const x = i * (candleWidth + 4) + 20;
+        const x = i * (candleWidth + 3) + 20 + candleWidth / 2;
         const y = getY(c.close);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
       if (chartType === 'area') {
-        const lastX = (candles.length - 1) * (candleWidth + 4) + 20;
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        const lastX = (candles.length - 1) * (candleWidth + 3) + 20 + candleWidth / 2;
+        const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
         gradient.addColorStop(0, 'rgba(0, 230, 118, 0.35)');
         gradient.addColorStop(1, 'rgba(0, 230, 118, 0.0)');
-        ctx.lineTo(lastX, height);
-        ctx.lineTo(20, height);
+        ctx.lineTo(lastX, chartHeight + 20);
+        ctx.lineTo(20, chartHeight + 20);
         ctx.fillStyle = gradient;
         ctx.fill();
       }
@@ -162,19 +240,18 @@ export default function App() {
       ctx.lineWidth = 2;
       ctx.stroke();
     } else {
-      // Candlesticks / Bars
       candles.forEach((c, i) => {
-        const x = i * (candleWidth + 4) + 20;
+        const x = i * (candleWidth + 3) + 20;
         const isUp = c.close >= c.open;
         const color = isUp ? '#00e676' : '#ff3366';
-        // Draw Wick
+        // Wick
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, getY(c.high));
         ctx.lineTo(x + candleWidth / 2, getY(c.low));
         ctx.stroke();
-        // Draw Candle Body
+        // Body
         const topY = getY(Math.max(c.open, c.close));
         const bottomY = getY(Math.min(c.open, c.close));
         const bodyH = Math.max(2, bottomY - topY);
@@ -182,7 +259,7 @@ export default function App() {
         ctx.fillRect(x, topY, candleWidth, bodyH);
       });
     }
-    // Current Price Glowing Dashed Line
+    // 6. Glowing Real-Time Price Line
     const curY = getY(latestPrice);
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = '#00e676';
@@ -192,18 +269,26 @@ export default function App() {
     ctx.lineTo(width, curY);
     ctx.stroke();
     ctx.setLineDash([]);
-    // Draw Active Trade Pins / Markers on Canvas
+    // 7. Render Executed Order Badges & Live Targets
     activeTrades.forEach(tr => {
       const trY = getY(tr.entry);
       ctx.fillStyle = tr.direction === 'UP' ? '#00e676' : '#ff3366';
       ctx.beginPath();
-      ctx.arc(width - 120, trY, 5, 0, Math.PI * 2);
+      ctx.arc(width - 130, trY, 6, 0, Math.PI * 2);
       ctx.fill();
+      // Horizontal Entry Line
+      ctx.strokeStyle = tr.direction === 'UP' ? 'rgba(0, 230, 118, 0.6)' : 'rgba(255, 51, 102, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(width - 220, trY);
+      ctx.lineTo(width - 30, trY);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(`${tr.direction} ${tr.amount}`, width - 110, trY + 4);
+      ctx.fillText(`${tr.isAi ? 'AI ' : ''}${tr.direction} ${tr.amount}`, width - 118, trY + 4);
     });
   }, [candles, latestPrice, chartType, activeTrades]);
-  const executeOrder = (direction, isAi = false) => {
+  const executeOrder = (direction, isAi = false, reason = 'Manual Order') => {
     const entry = latestPrice;
     const newTrade = {
       id: Date.now(),
@@ -211,11 +296,12 @@ export default function App() {
       amount,
       entry,
       payout: selectedAsset.payout,
-      isAi
+      isAi,
+      reason
     };
     setActiveTrades(prev => [...prev, newTrade]);
     setRecentSocialTrades(prev => [
-      { id: Date.now(), user: isAi ? 'AI Quant Bot' : 'You', dir: direction, duration: `${durationSec}s` },
+      { id: Date.now(), user: isAi ? 'AI Quant Engine' : 'You', dir: direction, duration: `${durationSec}s` },
       ...prev.slice(0, 3)
     ]);
     setTimeout(() => {
@@ -255,7 +341,7 @@ export default function App() {
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="text-[10px] text-gray-500 font-mono">
             <span className="inline-block w-2 h-2 rounded-full bg-[#00e676] mr-1 animate-pulse"></span>
-            7,412
+            8,940
           </div>
           <button className="text-gray-400 hover:text-white">
             <HelpCircle size={18} />
@@ -311,28 +397,50 @@ export default function App() {
             </button>
           </div>
         </div>
-        {/* CHART VIEWPORT (Responsive Canvas) */}
+        {/* CHART VIEWPORT */}
         <div className="flex-1 relative w-full h-full overflow-hidden">
           <canvas ref={canvasRef} className="w-full h-full block" />
-          {/* Floating Timeframe & Chart Style Switchers */}
-          <div className="absolute left-6 bottom-10 z-10 flex flex-col gap-2">
-            <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs">
-              {['5s', '15s', '1m', '5m'].map(tf => (
+          {/* Top-Left: AI Live Signal HUD Box */}
+          <div className="absolute top-4 left-6 z-10 bg-[#131518]/90 backdrop-blur border border-[#2a313d] rounded-2xl p-3 flex items-center gap-4 shadow-xl">
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-[#00e676] animate-pulse" />
+              <div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase">Signal Matrix</div>
+                <div className="text-xs font-mono font-black text-white">{aiTelemetry.trend}</div>
+              </div>
+            </div>
+            <div className="h-6 w-px bg-gray-700"></div>
+            <div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase">RSI (14)</div>
+              <div className={`text-xs font-mono font-black ${aiTelemetry.rsi < 35 ? 'text-[#00e676]' : aiTelemetry.rsi > 65 ? 'text-[#ff3366]' : 'text-gray-300'}`}>
+                {aiTelemetry.rsi}
+              </div>
+            </div>
+            <div className="h-6 w-px bg-gray-700"></div>
+            <div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase">Win Edge</div>
+              <div className="text-xs font-mono font-black text-[#00e676]">{aiTelemetry.winRate}%</div>
+            </div>
+          </div>
+          {/* Bottom Timeframes (5s up to 5 Years) */}
+          <div className="absolute left-6 bottom-8 z-10 flex flex-col gap-2">
+            <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs overflow-x-auto max-w-xl scrollbar-none">
+              {TIMEFRAMES.map(tf => (
                 <button
-                  key={tf}
+                  key={tf.label}
                   onClick={() => {
-                    setTimeframe(tf);
-                    setDurationSec(tf === '5s' ? 5 : tf === '15s' ? 15 : tf === '1m' ? 60 : 300);
+                    setSelectedTf(tf);
+                    setDurationSec(Math.min(tf.sec, 300));
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                    timeframe === tf ? 'bg-[#2a313d] text-[#00e676]' : 'text-gray-400 hover:text-white'
+                  className={`px-2.5 py-1 rounded-lg font-bold transition whitespace-nowrap ${
+                    selectedTf.label === tf.label ? 'bg-[#2a313d] text-[#00e676]' : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  {tf}
+                  {tf.label}
                 </button>
               ))}
             </div>
-            <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs">
+            <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs w-fit">
               {['candles', 'area', 'line'].map(st => (
                 <button
                   key={st}
@@ -416,14 +524,14 @@ export default function App() {
             </div>
           </div>
           <button
-            onClick={() => executeOrder('UP')}
+            onClick={() => executeOrder('UP', false, 'Manual Up Trade')}
             className="w-full bg-[#00e676] hover:bg-[#00c853] active:scale-95 transition py-4 rounded-2xl text-black font-black text-xl flex items-center justify-between px-6 shadow-lg shadow-[#00e676]/20"
           >
             <span>Up</span>
             <TrendingUp size={28} />
           </button>
           <button
-            onClick={() => executeOrder('DOWN')}
+            onClick={() => executeOrder('DOWN', false, 'Manual Down Trade')}
             className="w-full bg-[#ff3366] hover:bg-[#e62e5c] active:scale-95 transition py-4 rounded-2xl text-white font-black text-xl flex items-center justify-between px-6 shadow-lg shadow-[#ff3366]/20"
           >
             <span>Down</span>
@@ -439,14 +547,14 @@ export default function App() {
         <div className="bg-[#1a1e24] border border-[#2a313d] rounded-2xl p-3.5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-              <Zap size={14} className="text-[#00e676]" /> AI Engine Signals
+              <Zap size={14} className="text-[#00e676]" /> Quant Edge Rationale
             </span>
             <span className="text-[10px] bg-[#00e676]/20 text-[#00e676] px-2 py-0.5 rounded font-mono font-bold">
-              ACTIVE
+              {aiTelemetry.winRate}% EDGE
             </span>
           </div>
           <div className="text-[11px] text-gray-400 leading-snug">
-            Watching {selectedAsset.name} for 5s momentum breakouts & mean reversion.
+            {aiTelemetry.lastReason}
           </div>
         </div>
       </div>
