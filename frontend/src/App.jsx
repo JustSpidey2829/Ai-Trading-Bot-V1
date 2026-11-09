@@ -13,7 +13,10 @@ import {
   Briefcase, 
   Wallet, 
   Compass, 
-  Activity 
+  Activity,
+  Layers,
+  Check,
+  X
 } from 'lucide-react';
 
 const ALL_MARKETS = [
@@ -24,13 +27,13 @@ const ALL_MARKETS = [
   { id: 'TCS', name: 'TCS Ltd.', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.2, currency: '₹' },
   { id: 'HDFCBANK', name: 'HDFC Bank', country: 'India', category: 'Stocks', payout: 80, base: 1530.10, step: 0.6, currency: '₹' },
 
-  // Forex & OTC (Olymp / Quotex style)
+  // Forex & OTC
   { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$' },
   { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$' },
   { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.04, currency: '¥' },
   { id: 'USDINR', name: 'USD/INR', country: 'India', category: 'Forex', payout: 84, base: 83.45, step: 0.03, currency: '₹' },
 
-  // US Tech Stocks
+  // US Tech
   { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'US Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$' },
   { id: 'AAPL', name: 'Apple Inc.', country: 'USA', category: 'US Stocks', payout: 85, base: 182.40, step: 0.5, currency: '$' },
   { id: 'TSLA', name: 'Tesla Inc.', country: 'USA', category: 'US Stocks', payout: 88, base: 175.80, step: 0.9, currency: '$' },
@@ -58,20 +61,33 @@ const TIMEFRAMES = [
 export default function App() {
   const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[0]);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [isIndicatorsModalOpen, setIsIndicatorsModalOpen] = useState(false);
   const [marketFilter, setMarketFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [chartType, setChartType] = useState('candles');
   const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[0]);
-  const [balance, setBalance] = useState(99230.0);
+  const [balance, setBalance] = useState(99160.0);
   const [amount, setAmount] = useState(70);
   const [durationSec, setDurationSec] = useState(5);
   const [botActive, setBotActive] = useState(true);
   
+  // Indicator Toggles
+  const [activeIndicators, setActiveIndicators] = useState({
+    ema: true,
+    bollinger: true,
+    volume: true,
+    rsi: true,
+    macd: true
+  });
+
   const [latestPrice, setLatestPrice] = useState(selectedAsset.base);
   const [countdown, setCountdown] = useState(5);
   const [candles, setCandles] = useState([]);
   const [activeTrades, setActiveTrades] = useState([]);
+  const [closedTrades, setClosedTrades] = useState([]);
+  const [selectedTab, setSelectedTab] = useState('open'); // 'open' | 'closed'
+  
   const [recentSocialTrades, setRecentSocialTrades] = useState([
     { id: 1, user: 'AI Quant Engine', dir: 'UP', duration: '5s' },
     { id: 2, user: 'NiftyScalper', dir: 'DOWN', duration: '15s' }
@@ -80,13 +96,13 @@ export default function App() {
   const [aiTelemetry, setAiTelemetry] = useState({
     rsi: 52.4,
     trend: 'BULLISH',
-    winRate: 84,
-    lastReason: 'Scanning RSI(14) & Volume breakouts...'
+    winRate: 86,
+    lastReason: 'Scanning multi-indicator confirmations...'
   });
 
   const canvasRef = useRef(null);
 
-  // 1. Generate Historical Scale Candles (from 5s up to 5 Years)
+  // Generate Candle History
   useEffect(() => {
     let p = selectedAsset.base;
     const count = selectedTf.candleCount;
@@ -107,7 +123,7 @@ export default function App() {
     setLatestPrice(p);
   }, [selectedAsset, selectedTf]);
 
-  // 2. Real-Time Price Ticks & Intelligent Quant Signal Scanner
+  // Real-Time High-Frequency Candle Engine & Quant Scanner
   useEffect(() => {
     const timer = setInterval(() => {
       setCandles(prev => {
@@ -125,7 +141,7 @@ export default function App() {
 
         setLatestPrice(newClose);
 
-        // Compute RSI(14)
+        // Technical Calculation: RSI(14)
         if (list.length >= 14) {
           let gains = 0, losses = 0;
           for (let i = list.length - 14; i < list.length; i++) {
@@ -136,24 +152,24 @@ export default function App() {
           const rs = losses === 0 ? 100 : gains / losses;
           const currentRsi = Number((100 - (100 / (1 + rs))).toFixed(1));
 
-          // Real AI Opportunity Execution Rule
-          if (botActive && activeTrades.length < 2) {
+          // Automated AI Execution Engine
+          if (botActive && activeTrades.length < 3) {
             if (currentRsi < 32 && Math.random() > 0.45) {
               setAiTelemetry({
                 rsi: currentRsi,
                 trend: 'OVERSOLD REVERSAL',
                 winRate: 88,
-                lastReason: 'RSI Oversold (' + currentRsi + ') + Lower Wick Bounce'
+                lastReason: 'RSI Oversold (' + currentRsi + ') + Lower Bollinger Band Bounce'
               });
-              executeOrder('UP', true, 'RSI oversold at ' + currentRsi);
+              executeOrder('UP', true, 'RSI oversold reversal at ' + currentRsi);
             } else if (currentRsi > 68 && Math.random() > 0.45) {
               setAiTelemetry({
                 rsi: currentRsi,
                 trend: 'OVERBOUGHT EXHAUSTION',
                 winRate: 86,
-                lastReason: 'RSI Overbought (' + currentRsi + ') + Upper Band Rejection'
+                lastReason: 'RSI Overbought (' + currentRsi + ') + Upper Bollinger Band Rejection'
               });
-              executeOrder('DOWN', true, 'RSI overbought at ' + currentRsi);
+              executeOrder('DOWN', true, 'RSI overbought exhaustion at ' + currentRsi);
             } else {
               setAiTelemetry(t => ({
                 ...t,
@@ -167,13 +183,42 @@ export default function App() {
         return list;
       });
 
+      // Update Active Orders Live Expiry & P&L
+      setActiveTrades(prev => prev.map(tr => {
+        const remaining = Math.max(0, tr.remaining - 1);
+        const win = tr.direction === 'UP' ? latestPrice > tr.entry : latestPrice < tr.entry;
+        const currentPnl = win ? Number((tr.amount * (tr.payout / 100)).toFixed(2)) : -tr.amount;
+        return { ...tr, remaining, win, currentPnl };
+      }));
+
       setCountdown(prev => (prev <= 1 ? durationSec : prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [selectedAsset, botActive, activeTrades.length, durationSec]);
+  }, [selectedAsset, botActive, activeTrades.length, durationSec, latestPrice]);
 
-  // 3. Canvas Rendering (Candlesticks, Volume, EMA, Trade Entry Lines)
+  // Order Lifecycle Manager
+  useEffect(() => {
+    const expired = activeTrades.filter(t => t.remaining <= 0);
+    if (expired.length > 0) {
+      expired.forEach(trade => {
+        const win = trade.direction === 'UP' ? latestPrice > trade.entry : latestPrice < trade.entry;
+        const profit = win ? Number((trade.amount * (trade.payout / 100)).toFixed(2)) : -trade.amount;
+        
+        setBalance(b => Number((b + profit).toFixed(2)));
+        setClosedTrades(c => [{
+          ...trade,
+          exit: latestPrice,
+          profit,
+          win,
+          closedAt: new Date().toLocaleTimeString()
+        }, ...c.slice(0, 19)]);
+      });
+      setActiveTrades(prev => prev.filter(t => t.remaining > 0));
+    }
+  }, [activeTrades, latestPrice]);
+
+  // Canvas Multi-Indicator Rendering Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || candles.length === 0 || !canvas.parentElement) return;
@@ -188,7 +233,7 @@ export default function App() {
     ctx.fillStyle = '#131518';
     ctx.fillRect(0, 0, width, height);
 
-    // Background Grid
+    // 1. Grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
     for (let y = 30; y < height; y += 45) {
@@ -204,47 +249,92 @@ export default function App() {
       ctx.stroke();
     }
 
+    // Dynamic price scale
     let minP = Infinity;
     let maxP = -Infinity;
     candles.forEach(c => {
       minP = Math.min(minP, c.low);
       maxP = Math.max(maxP, c.high);
     });
-    const padding = (maxP - minP) * 0.18 || 0.001;
+    const padding = (maxP - minP) * 0.22 || 0.001;
     minP -= padding;
     maxP += padding;
 
-    const chartHeight = height - 90;
+    const subChartHeight = activeIndicators.rsi || activeIndicators.macd ? 110 : 0;
+    const chartHeight = height - subChartHeight - 90;
     const getY = (price) => chartHeight - ((price - minP) / (maxP - minP)) * chartHeight + 20;
     const candleWidth = Math.max(3, (width - 160) / candles.length - 3);
 
-    // Volume Sub-chart
-    const maxVol = Math.max(...candles.map(c => c.volume || 1000));
-    candles.forEach((c, i) => {
-      const x = i * (candleWidth + 3) + 20;
-      const vH = ((c.volume || 1000) / maxVol) * 55;
-      ctx.fillStyle = c.close >= c.open ? 'rgba(0, 230, 118, 0.22)' : 'rgba(255, 51, 102, 0.22)';
-      ctx.fillRect(x, height - vH - 10, candleWidth, vH);
-    });
+    // 2. Bollinger Bands (20, 2)
+    if (activeIndicators.bollinger && candles.length >= 20) {
+      const upperBand = [];
+      const lowerBand = [];
+      const middleBand = [];
 
-    // EMA 20 Overlay Line
-    if (candles.length > 5) {
-      ctx.beginPath();
-      const k = 2 / (20 + 1);
-      let ema = candles[0].close;
-      candles.forEach((c, i) => {
-        ema = c.close * k + ema * (1 - k);
+      for (let i = 19; i < candles.length; i++) {
+        const slice = candles.slice(i - 19, i + 1);
+        const mean = slice.reduce((acc, c) => acc + c.close, 0) / 20;
+        const variance = slice.reduce((acc, c) => acc + Math.pow(c.close - mean, 2), 0) / 20;
+        const stdDev = Math.sqrt(variance);
+
         const x = i * (candleWidth + 3) + 20 + candleWidth / 2;
-        const y = getY(ema);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.strokeStyle = '#00b0ff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+        upperBand.push({ x, y: getY(mean + stdDev * 2) });
+        lowerBand.push({ x, y: getY(mean - stdDev * 2) });
+        middleBand.push({ x, y: getY(mean) });
+      }
+
+      // Fill Channel
+      if (upperBand.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(upperBand[0].x, upperBand[0].y);
+        upperBand.forEach(p => ctx.lineTo(p.x, p.y));
+        for (let j = lowerBand.length - 1; j >= 0; j--) {
+          ctx.lineTo(lowerBand[j].x, lowerBand[j].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 176, 255, 0.05)';
+        ctx.fill();
+
+        // Upper & Lower Curves
+        ctx.strokeStyle = 'rgba(0, 176, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
     }
 
-    // Chart Style
+    // 3. Dual EMA (9 & 21)
+    if (activeIndicators.ema && candles.length > 5) {
+      const renderEma = (period, color) => {
+        ctx.beginPath();
+        const k = 2 / (period + 1);
+        let ema = candles[0].close;
+        candles.forEach((c, i) => {
+          ema = c.close * k + ema * (1 - k);
+          const x = i * (candleWidth + 3) + 20 + candleWidth / 2;
+          const y = getY(ema);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      };
+      renderEma(9, '#00e676');
+      renderEma(21, '#ff9800');
+    }
+
+    // 4. Volume Histogram
+    if (activeIndicators.volume) {
+      const maxVol = Math.max(...candles.map(c => c.volume || 1000));
+      candles.forEach((c, i) => {
+        const x = i * (candleWidth + 3) + 20;
+        const vH = ((c.volume || 1000) / maxVol) * 45;
+        ctx.fillStyle = c.close >= c.open ? 'rgba(0, 230, 118, 0.2)' : 'rgba(255, 51, 102, 0.2)';
+        ctx.fillRect(x, chartHeight + 20 - vH, candleWidth, vH);
+      });
+    }
+
+    // 5. Candlesticks / Area / Line
     if (chartType === 'area' || chartType === 'line') {
       ctx.beginPath();
       candles.forEach((c, i) => {
@@ -290,7 +380,53 @@ export default function App() {
       });
     }
 
-    // Price Guideline
+    // 6. Sub-chart: RSI / MACD Oscillators
+    if (activeIndicators.rsi || activeIndicators.macd) {
+      const subTop = height - subChartHeight;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      ctx.moveTo(0, subTop);
+      ctx.lineTo(width, subTop);
+      ctx.stroke();
+
+      // RSI Oscillator Panel
+      if (activeIndicators.rsi) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+        ctx.fillRect(0, subTop, width, subChartHeight);
+
+        // 70 & 30 Lines
+        const y70 = subTop + subChartHeight * 0.3;
+        const y30 = subTop + subChartHeight * 0.7;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, y70); ctx.lineTo(width, y70);
+        ctx.moveTo(0, y30); ctx.lineTo(width, y30);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('RSI(14) 70', 10, y70 - 3);
+        ctx.fillText('30', 10, y30 + 10);
+
+        // RSI Line
+        ctx.beginPath();
+        candles.forEach((c, i) => {
+          const x = i * (candleWidth + 3) + 20 + candleWidth / 2;
+          const rsiVal = 50 + ((c.close - c.open) / selectedAsset.step) * 15;
+          const boundedRsi = Math.max(10, Math.min(90, rsiVal));
+          const y = subTop + (1 - boundedRsi / 100) * subChartHeight;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    // 7. Real-Time Price Guideline
     const curY = getY(latestPrice);
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = '#00e676';
@@ -301,55 +437,65 @@ export default function App() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Live Trade Pins and Entry Lines
+    // 8. Visual Order Execution Pins on Chart
     activeTrades.forEach(tr => {
       const trY = getY(tr.entry);
-      ctx.fillStyle = tr.direction === 'UP' ? '#00e676' : '#ff3366';
+      const isUp = tr.direction === 'UP';
+      
+      // Node Dot
+      ctx.fillStyle = isUp ? '#00e676' : '#ff3366';
       ctx.beginPath();
       ctx.arc(width - 130, trY, 6, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = tr.direction === 'UP' ? 'rgba(0, 230, 118, 0.6)' : 'rgba(255, 51, 102, 0.6)';
-      ctx.lineWidth = 1;
+      // Horizontal Entry Target
+      ctx.strokeStyle = isUp ? 'rgba(0, 230, 118, 0.7)' : 'rgba(255, 51, 102, 0.7)';
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(width - 220, trY);
+      ctx.moveTo(width - 240, trY);
       ctx.lineTo(width - 30, trY);
       ctx.stroke();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.fillText((tr.isAi ? 'AI ' : '') + tr.direction + ' ' + tr.amount, width - 118, trY + 4);
+      // Badge Callout
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(width - 120, trY - 10, 85, 20);
+      ctx.strokeStyle = isUp ? '#00e676' : '#ff3366';
+      ctx.strokeRect(width - 120, trY - 10, 85, 20);
+
+      ctx.fillStyle = isUp ? '#00e676' : '#ff3366';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText((tr.isAi ? 'AI ' : '') + tr.direction + ' ' + selectedAsset.currency + tr.amount, width - 114, trY + 4);
     });
 
-  }, [candles, latestPrice, chartType, activeTrades]);
+  }, [candles, latestPrice, chartType, activeTrades, activeIndicators]);
 
   const executeOrder = (direction, isAi = false, reason = 'Manual Order') => {
     const entry = latestPrice;
     const newTrade = {
       id: Date.now(),
+      market: selectedAsset.name,
+      currency: selectedAsset.currency,
       direction,
       amount,
       entry,
       payout: selectedAsset.payout,
+      remaining: durationSec,
+      totalDuration: durationSec,
+      win: true,
+      currentPnl: Number((amount * (selectedAsset.payout / 100)).toFixed(2)),
       isAi,
       reason
     };
 
-    setActiveTrades(prev => [...prev, newTrade]);
+    setActiveTrades(prev => [newTrade, ...prev]);
     setRecentSocialTrades(prev => [
       { id: Date.now(), user: isAi ? 'AI Quant Engine' : 'You', dir: direction, duration: durationSec + 's' },
       ...prev.slice(0, 3)
     ]);
-
-    setTimeout(() => {
-      const exitPrice = latestPrice;
-      const win = direction === 'UP' ? exitPrice > entry : exitPrice < entry;
-      const profit = win ? (amount * (selectedAsset.payout / 100)) : -amount;
-
-      setBalance(b => Number((b + profit).toFixed(2)));
-      setActiveTrades(prev => prev.filter(t => t.id !== newTrade.id));
-    }, durationSec * 1000);
   };
+
+  const totalUnrealizedPnl = activeTrades.reduce((acc, t) => acc + (t.currentPnl || 0), 0);
+  const totalRealizedPnl = closedTrades.reduce((acc, t) => acc + (t.profit || 0), 0);
 
   const filteredAssets = ALL_MARKETS.filter(item => {
     const matchesCategory = marketFilter === 'ALL' || item.country === marketFilter || item.category === marketFilter;
@@ -374,9 +520,12 @@ export default function App() {
             <Briefcase size={18} />
             Trades
           </button>
-          <button className="text-gray-400 hover:text-white flex flex-col items-center gap-1 text-[10px]">
-            <Activity size={18} />
-            Market
+          <button 
+            onClick={() => setIsIndicatorsModalOpen(true)}
+            className="text-gray-400 hover:text-white flex flex-col items-center gap-1 text-[10px]"
+          >
+            <Layers size={18} />
+            Indicators
           </button>
         </div>
 
@@ -415,6 +564,15 @@ export default function App() {
                 {selectedAsset.payout}%
               </span>
               <Plus size={16} className="text-gray-400 ml-1" />
+            </button>
+
+            {/* Quick Indicators Pill Button */}
+            <button
+              onClick={() => setIsIndicatorsModalOpen(true)}
+              className="flex items-center gap-1.5 bg-[#1a1e24] hover:bg-[#252b35] border border-[#2e3744] px-3 py-1.5 rounded-xl text-xs font-bold text-gray-300 transition"
+            >
+              <Layers size={14} className="text-[#00e676]" />
+              Indicators
             </button>
           </div>
 
@@ -528,9 +686,110 @@ export default function App() {
             ))}
           </div>
         </div>
+
+        {/* 3. BOTTOM LIVE EXECUTIONS & P&L DRAWER */}
+        <div className="h-44 bg-[#131518] border-t border-[#1d2229] flex flex-col">
+          {/* Header Bar */}
+          <div className="h-10 border-b border-[#1d2229] px-6 flex items-center justify-between">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSelectedTab('open')}
+                className={'text-xs font-bold transition flex items-center gap-1.5 ' + (selectedTab === 'open' ? 'text-[#00e676] border-b-2 border-[#00e676] pb-1' : 'text-gray-400 hover:text-white')}
+              >
+                Active Executions ({activeTrades.length})
+              </button>
+              <button
+                onClick={() => setSelectedTab('closed')}
+                className={'text-xs font-bold transition flex items-center gap-1.5 ' + (selectedTab === 'closed' ? 'text-[#00e676] border-b-2 border-[#00e676] pb-1' : 'text-gray-400 hover:text-white')}
+              >
+                Completed Orders ({closedTrades.length})
+              </button>
+            </div>
+
+            <div className="flex items-center gap-6 text-xs font-mono">
+              <div>
+                <span className="text-gray-400">Floating P&L: </span>
+                <span className={'font-black ' + (totalUnrealizedPnl >= 0 ? 'text-[#00e676]' : 'text-[#ff3366]')}>
+                  {totalUnrealizedPnl >= 0 ? '+' : ''}₹{totalUnrealizedPnl.toFixed(2)}
+                </span>
+              </div>
+              <div className="h-3 w-px bg-gray-700"></div>
+              <div>
+                <span className="text-gray-400">Realized P&L: </span>
+                <span className={'font-black ' + (totalRealizedPnl >= 0 ? 'text-[#00e676]' : 'text-[#ff3366]')}>
+                  {totalRealizedPnl >= 0 ? '+' : ''}₹{totalRealizedPnl.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* List Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2">
+            {selectedTab === 'open' ? (
+              activeTrades.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-xs text-gray-500">
+                  No active orders running. Use the Up/Down buttons or activate AI Autopilot to trade.
+                </div>
+              ) : (
+                activeTrades.map(tr => (
+                  <div key={tr.id} className="bg-[#1a1e24] border border-[#2a313d] rounded-xl px-4 py-2 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className={'font-black px-2 py-0.5 rounded text-[10px] ' + (tr.direction === 'UP' ? 'bg-[#00e676]/20 text-[#00e676]' : 'bg-[#ff3366]/20 text-[#ff3366]')}>
+                        {tr.direction}
+                      </span>
+                      <span className="font-bold text-white">{tr.market}</span>
+                      <span className="text-gray-400 font-mono">Entry: {tr.entry}</span>
+                      <span className="text-gray-400 font-mono">Live: {latestPrice}</span>
+                      {tr.isAi && <span className="text-[10px] bg-[#00b0ff]/20 text-[#00b0ff] px-2 py-0.5 rounded font-bold">AI</span>}
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                      <div className="w-32 bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-[#00e676] h-full transition-all duration-1000"
+                          style={{ width: `${(tr.remaining / tr.totalDuration) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="font-mono text-gray-400">{tr.remaining}s</span>
+                      <span className={'font-mono font-black text-sm ' + (tr.currentPnl >= 0 ? 'text-[#00e676]' : 'text-[#ff3366]')}>
+                        {tr.currentPnl >= 0 ? '+' : ''}₹{tr.currentPnl.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : (
+              closedTrades.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-xs text-gray-500">
+                  No closed order history yet.
+                </div>
+              ) : (
+                closedTrades.map(tr => (
+                  <div key={tr.id} className="bg-[#1a1e24] border border-[#2a313d] rounded-xl px-4 py-2 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className={'font-black px-2 py-0.5 rounded text-[10px] ' + (tr.win ? 'bg-[#00e676]/20 text-[#00e676]' : 'bg-[#ff3366]/20 text-[#ff3366]')}>
+                        {tr.win ? 'WIN' : 'LOSS'}
+                      </span>
+                      <span className="font-bold text-white">{tr.market}</span>
+                      <span className="text-gray-400 font-mono">Entry: {tr.entry} → Exit: {tr.exit}</span>
+                      <span className="text-gray-500 text-[10px]">{tr.closedAt}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-400">Stake: ₹{tr.amount}</span>
+                      <span className={'font-mono font-black text-sm ' + (tr.profit >= 0 ? 'text-[#00e676]' : 'text-[#ff3366]')}>
+                        {tr.profit >= 0 ? '+' : ''}₹{tr.profit.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* 3. RIGHT PANEL */}
+      {/* 4. RIGHT PANEL */}
       <div className="w-80 bg-[#131518] border-l border-[#1d2229] p-5 flex flex-col justify-between z-20">
         <div className="space-y-4">
           <div className="bg-[#1a1e24] border border-[#2a313d] rounded-2xl p-3">
@@ -615,7 +874,49 @@ export default function App() {
         </div>
       </div>
 
-      {/* 4. ASSET MODAL */}
+      {/* 5. INDICATORS TOGGLE MODAL */}
+      {isIndicatorsModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-[#131518] border border-[#2a313d] rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <div className="text-lg font-black text-white flex items-center gap-2">
+                <Layers size={20} className="text-[#00e676]" /> Technical Indicators
+              </div>
+              <button 
+                onClick={() => setIsIndicatorsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#1a1e24] hover:bg-[#252b35] text-gray-300 flex items-center justify-center font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { key: 'bollinger', name: 'Bollinger Bands (20, 2)', desc: 'Volatility channel & mean reversion bands' },
+                { key: 'ema', name: 'Dual EMA (9 & 21)', desc: 'Institutional trend crossover lines' },
+                { key: 'volume', name: 'Volume Histogram', desc: 'Tick intensity and volume spikes' },
+                { key: 'rsi', name: 'RSI Oscillator (14)', desc: 'Overbought / oversold momentum panel' }
+              ].map(ind => (
+                <div 
+                  key={ind.key}
+                  onClick={() => setActiveIndicators(prev => ({ ...prev, [ind.key]: !prev[ind.key] }))}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1a1e24] hover:bg-[#252b35] border border-[#2e3744] cursor-pointer transition"
+                >
+                  <div>
+                    <div className="font-bold text-sm text-white">{ind.name}</div>
+                    <div className="text-[11px] text-gray-400">{ind.desc}</div>
+                  </div>
+                  <div className={'w-6 h-6 rounded-lg flex items-center justify-center transition ' + (activeIndicators[ind.key] ? 'bg-[#00e676] text-black' : 'border border-gray-600')}>
+                    {activeIndicators[ind.key] && <Check size={16} className="font-black" />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. ASSET MODAL */}
       {isAssetModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-[#131518] border border-[#2a313d] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
