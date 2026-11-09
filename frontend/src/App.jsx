@@ -12,27 +12,42 @@ import {
   Briefcase, 
   Wallet, 
   Compass, 
-  Activity,
-  Check,
-  X,
-  Radio,
-  Sliders,
-  Sparkles,
-  ShoppingBag,
-  ShieldAlert
+  Activity, 
+  Check, 
+  X, 
+  Radio, 
+  Sliders, 
+  Sparkles, 
+  ShoppingBag, 
+  ShieldAlert,
+  ArrowUpRight,
+  ArrowDownRight,
+  Percent,
+  Lock,
+  Layers
 } from 'lucide-react';
 
 const ALL_MARKETS = [
-  { id: 'AI_GLOBAL', name: 'AI Global Index', country: 'Global', category: 'InZone', payout: 110, base: 6696.6772, step: 0.12, currency: 'Ð' },
-  { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$' },
-  { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$' },
-  { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.04, currency: '¥' },
-  { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 82, base: 22450.0, step: 4.2, currency: '₹' },
-  { id: 'BANKNIFTY', name: 'BANK NIFTY', country: 'India', category: 'Indices', payout: 82, base: 47920.0, step: 8.5, currency: '₹' },
-  { id: 'RELIANCE', name: 'Reliance Ind.', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.9, currency: '₹' },
-  { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$' },
-  { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 24.0, currency: '$' },
-  { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.8, currency: '$' }
+  // 1. Olymp Trade Synthetic & OTC
+  { id: 'AI_GLOBAL', name: 'AI Global Index', country: 'Global', category: 'InZone', payout: 110, base: 6696.6772, step: 0.12, currency: 'Ð', lotSize: 1 },
+  { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$', lotSize: 1 },
+  { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$', lotSize: 1 },
+  
+  // 2. Indian Indices & Equities (Groww, Zerodha Kite, Upstox)
+  { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 85, base: 22450.40, step: 4.5, currency: '₹', lotSize: 50 },
+  { id: 'BANKNIFTY', name: 'BANK NIFTY', country: 'India', category: 'Indices', payout: 85, base: 47925.80, step: 9.0, currency: '₹', lotSize: 15 },
+  { id: 'FINNIFTY', name: 'NIFTY FIN SERVICE', country: 'India', category: 'Indices', payout: 82, base: 21320.10, step: 3.5, currency: '₹', lotSize: 40 },
+  { id: 'SENSEX', name: 'BSE SENSEX', country: 'India', category: 'Indices', payout: 84, base: 73850.00, step: 12.0, currency: '₹', lotSize: 10 },
+  { id: 'RELIANCE', name: 'Reliance Industries', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.9, currency: '₹', lotSize: 250 },
+  { id: 'TCS', name: 'Tata Consultancy Services', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.2, currency: '₹', lotSize: 175 },
+  { id: 'HDFCBANK', name: 'HDFC Bank Ltd', country: 'India', category: 'Stocks', payout: 80, base: 1532.60, step: 0.6, currency: '₹', lotSize: 550 },
+  { id: 'TATAMOTORS', name: 'Tata Motors', country: 'India', category: 'Stocks', payout: 82, base: 975.30, step: 0.5, currency: '₹', lotSize: 700 },
+
+  // 3. US Equities & Crypto
+  { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$', lotSize: 1 },
+  { id: 'AAPL', name: 'Apple Inc.', country: 'USA', category: 'Stocks', payout: 85, base: 182.40, step: 0.5, currency: '$', lotSize: 1 },
+  { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 24.0, currency: '$', lotSize: 1 },
+  { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.8, currency: '$', lotSize: 1 }
 ];
 
 const TIMEFRAMES = [
@@ -62,16 +77,18 @@ const AVAILABLE_INDICATORS = [
 
 export default function App() {
   const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[0]);
-  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [activeMode, setActiveMode] = useState('InZone'); // 'Fixed Time' | 'InZone' | 'Forex' | 'Stocks'
   
-  // Interactive Floating Toolbars & Drawer States
+  // Interactive Controls matching Screenshots
   const [showChartTypeMenu, setShowChartTypeMenu] = useState(false);
   const [showTimeframeMenu, setShowTimeframeMenu] = useState(false);
   const [showLeftDrawer, setShowLeftDrawer] = useState(false);
   const [showTradesDrawer, setShowTradesDrawer] = useState(false);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [indicatorSearch, setIndicatorSearch] = useState('');
+  const [marketFilter, setMarketFilter] = useState('ALL');
 
+  // Chart & Execution State
   const [chartType, setChartType] = useState('candles'); // 'area' | 'candles' | 'heikin' | 'bars'
   const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[1]); // Default 15s
   const [balance, setBalance] = useState(10000.0);
@@ -79,7 +96,11 @@ export default function App() {
   const [durationSec, setDurationSec] = useState(15);
   const [botActive, setBotActive] = useState(true);
 
-  // Active Indicators State
+  // Indian Broker Style Order Settings (Groww / Zerodha MIS / CNC)
+  const [orderProduct, setOrderProduct] = useState('MIS'); // 'MIS' (Intraday) | 'CNC' (Delivery)
+  const [orderType, setOrderType] = useState('MARKET'); // 'MARKET' | 'LIMIT'
+
+  // Indicators State
   const [activeIndicators, setActiveIndicators] = useState({
     alligator: false,
     bollinger: false,
@@ -109,9 +130,9 @@ export default function App() {
     for (let i = 0; i < count; i++) {
       const open = p;
       const drift = (Math.random() - 0.495) * (selectedAsset.step * 2.2 * multiplier);
-      const close = Number((open + drift).toFixed(4));
-      const high = Number((Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(4));
-      const low = Number((Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(4));
+      const close = Number((open + drift).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
+      const high = Number((Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
+      const low = Number((Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
       initialList.push({ open, high, low, close });
       p = close;
     }
@@ -119,7 +140,7 @@ export default function App() {
     setLatestPrice(p);
   }, [selectedAsset, selectedTf]);
 
-  // 2. Real-Time Price Engine & AI Automation
+  // 2. Real-Time Price Engine & AI Automation Loop
   useEffect(() => {
     const timer = setInterval(() => {
       setCandles(prev => {
@@ -127,7 +148,7 @@ export default function App() {
         const list = [...prev];
         const last = { ...list[list.length - 1] };
         const change = (Math.random() - 0.495) * selectedAsset.step;
-        const newClose = Number((last.close + change).toFixed(4));
+        const newClose = Number((last.close + change).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
 
         last.close = newClose;
         last.high = Math.max(last.high, newClose);
@@ -136,15 +157,15 @@ export default function App() {
 
         setLatestPrice(newClose);
 
-        // Real-Time AI Quant Bot Automation
-        if (botActive && activeTrades.length < 1 && Math.random() > 0.88) {
+        // Intelligent AI Trading Execution
+        if (botActive && activeTrades.length < 2 && Math.random() > 0.85) {
           executeOrder(Math.random() > 0.5 ? 'UP' : 'DOWN', true);
         }
 
         return list;
       });
 
-      // Update Remaining Time on Active Orders
+      // Update Active Orders
       setActiveTrades(prev => prev.map(tr => ({
         ...tr,
         remaining: Math.max(0, tr.remaining - 1)
@@ -156,7 +177,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, [selectedAsset, botActive, activeTrades.length, durationSec, latestPrice]);
 
-  // Order Expiry Manager
+  // Order Lifecycle Manager
   useEffect(() => {
     const expired = activeTrades.filter(t => t.remaining <= 0);
     if (expired.length > 0) {
@@ -222,7 +243,7 @@ export default function App() {
     const getY = (price) => chartHeight - ((price - minP) / (maxP - minP)) * chartHeight + 20;
     const candleWidth = Math.max(7, (width - 240) / candles.length - 5);
 
-    // Indicators (Bollinger, EMA, etc.)
+    // Dynamic Technical Indicators
     if (activeIndicators.bollinger && candles.length >= 15) {
       const upperBand = [];
       const lowerBand = [];
@@ -269,7 +290,7 @@ export default function App() {
       ctx.stroke();
     }
 
-    // Chart Style (Area, Candlesticks, Heikin Ashi, Bars)
+    // Chart Style Rendering (Area, Candlesticks, Heikin Ashi, Bars)
     if (chartType === 'area') {
       ctx.beginPath();
       candles.forEach((c, i) => {
@@ -341,16 +362,15 @@ export default function App() {
       });
     }
 
-    // Exact Olymp Trade InZone Target Corridor Box (Screenshots 1 & 2)
+    // Exact Olymp Trade InZone Target Corridor Box
     const inZoneY = getY(latestPrice);
     const boxWidth = 160;
     const boxStart = width - boxWidth - 30;
 
-    // Semi-transparent blue fill
+    // Corridor Blue Shading & Top/Bottom Targets
     ctx.fillStyle = 'rgba(30, 58, 138, 0.2)';
     ctx.fillRect(boxStart, inZoneY - 34, boxWidth, 68);
 
-    // Blue top and bottom corridor boundaries
     ctx.strokeStyle = '#3b82f6';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -360,13 +380,12 @@ export default function App() {
     ctx.lineTo(boxStart + boxWidth, inZoneY + 34);
     ctx.stroke();
 
-    // Percentage targets on boundary
     ctx.fillStyle = '#60a5fa';
     ctx.font = 'bold 10px Inter, sans-serif';
     ctx.fillText('+0.003%', boxStart + boxWidth - 45, inZoneY - 38);
     ctx.fillText('-0.003%', boxStart + boxWidth - 45, inZoneY + 46);
 
-    // Dotted Vertical Line for "Trade start" with Flag Icon at Top
+    // Dotted Vertical Line for "Trade start"
     ctx.setLineDash([3, 4]);
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.beginPath();
@@ -380,12 +399,21 @@ export default function App() {
     ctx.fillText('Trade', boxStart - 32, 45);
     ctx.fillText('start', boxStart - 30, 56);
 
+    // Flag Pin Icon at top of dotted line
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(boxStart, 26, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText('⚑', boxStart - 3, 29);
+
     // Live White Price Tag on Axis
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(width - 72, inZoneY - 10, 72, 20);
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 11px monospace';
-    ctx.fillText(latestPrice.toFixed(4), width - 68, inZoneY + 4);
+    ctx.fillText(latestPrice.toFixed(selectedAsset.step < 0.01 ? 4 : 2), width - 68, inZoneY + 4);
 
     // Active Countdown Pill
     ctx.fillStyle = '#1e242d';
@@ -426,6 +454,11 @@ export default function App() {
   const filteredIndicators = AVAILABLE_INDICATORS.filter(ind => 
     ind.name.toLowerCase().includes(indicatorSearch.toLowerCase())
   );
+
+  const filteredAssets = ALL_MARKETS.filter(item => {
+    const matchesCategory = marketFilter === 'ALL' || item.country === marketFilter || item.category === marketFilter;
+    return matchesCategory;
+  });
 
   return (
     <div className="flex h-screen w-screen bg-[#0e0f12] text-[#e6edf3] font-sans overflow-hidden select-none">
@@ -590,7 +623,7 @@ export default function App() {
                   <div className="text-[10px] text-gray-500">{tr.closedAt}</div>
                 </div>
                 <div className={`font-mono font-black ${tr.profit >= 0 ? 'text-[#00e676]' : 'text-[#ff4d6d]'}`}>
-                  {tr.profit >= 0 ? '+' : ''}Ð{tr.profit.toFixed(2)}
+                  {tr.profit >= 0 ? '+' : ''}{tr.currency || 'Ð'}{tr.profit.toFixed(2)}
                 </div>
               </div>
             ))}
@@ -639,7 +672,7 @@ export default function App() {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm font-black font-mono text-white">
-                Ð{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {selectedAsset.currency}{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-[10px] text-gray-400 flex items-center justify-end gap-1">
                 <span>Demo account</span>
@@ -790,7 +823,7 @@ export default function App() {
           
           {/* Amount Box */}
           <div className="bg-[#1a1c21] border border-[#262931] rounded-2xl p-3">
-            <div className="text-[11px] text-gray-400 font-semibold mb-1 text-center">Amount, Ð</div>
+            <div className="text-[11px] text-gray-400 font-semibold mb-1 text-center">Amount, {selectedAsset.currency}</div>
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => setAmount(prev => Math.max(10, prev - 10))}
@@ -844,7 +877,7 @@ export default function App() {
           {/* Exact Payout Guarantee Text (Screenshots 1 & 2) */}
           <div className="text-center space-y-1">
             <div className="text-xs text-gray-300">
-              You'll earn <span className="font-black text-[#00e676]">Ð{(amount * (1 + selectedAsset.payout / 100)).toFixed(2)}</span> if the quote is within the range as the trade closes.
+              You'll earn <span className="font-black text-[#00e676]">{selectedAsset.currency}{(amount * (1 + selectedAsset.payout / 100)).toFixed(2)}</span> if the quote is within the range as the trade closes.
             </div>
             <div className="text-[11px] text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-400">
               How it works <HelpCircle size={12} />
@@ -866,12 +899,12 @@ export default function App() {
             </button>
           </div>
           <div className="text-[11px] text-gray-400 leading-snug">
-            InZone volatility corridor scanning for 110% payout range closures.
+            InZone volatility corridor scanning for {selectedAsset.payout}% payout range closures.
           </div>
         </div>
       </div>
 
-      {/* 6. ALL WORLD MARKETS MODAL */}
+      {/* 6. ALL WORLD MARKETS MODAL (India, US, Crypto, Commodities) */}
       {isAssetModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-[#14161a] border border-[#262931] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -887,8 +920,22 @@ export default function App() {
               </button>
             </div>
 
+            <div className="flex gap-2 p-3 bg-[#121316] overflow-x-auto text-xs font-semibold">
+              {['ALL', 'India', 'Global', 'USA', 'Crypto', 'Commodities'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setMarketFilter(cat)}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    marketFilter === cat ? 'bg-[#00e676] text-black font-black' : 'bg-[#1a1c21] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <div className="p-4 overflow-y-auto space-y-2 flex-1">
-              {ALL_MARKETS.map(asset => (
+              {filteredAssets.map(asset => (
                 <div
                   key={asset.id}
                   onClick={() => {
