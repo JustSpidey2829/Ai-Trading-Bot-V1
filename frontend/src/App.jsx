@@ -20,46 +20,36 @@ import {
   Sparkles, 
   ShoppingBag, 
   ShieldAlert,
-  ArrowUpRight,
-  ArrowDownRight,
   RotateCcw,
-  BookOpen,
-  DollarSign
+  BookOpen
 } from 'lucide-react';
 
 const ALL_MARKETS = [
-  // 1. Olymp Trade Synthetic & OTC
-  { id: 'AI_GLOBAL', name: 'AI Global Index', country: 'Global', category: 'InZone', payout: 110, base: 6696.6772, step: 0.12, currency: 'Ð' },
+  { id: 'AI_GLOBAL', name: 'AI Global Index', country: 'Global', category: 'InZone', payout: 110, base: 6700.5776, step: 0.14, currency: 'Ð' },
   { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$' },
   { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$' },
   { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.04, currency: '¥' },
-  
-  // 2. Indian Indices & Equities (Groww, Zerodha Kite, Upstox)
   { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 85, base: 22450.40, step: 4.5, currency: '₹' },
   { id: 'BANKNIFTY', name: 'BANK NIFTY', country: 'India', category: 'Indices', payout: 85, base: 47925.80, step: 9.0, currency: '₹' },
-  { id: 'FINNIFTY', name: 'NIFTY FIN SERVICE', country: 'India', category: 'Indices', payout: 82, base: 21320.10, step: 3.5, currency: '₹' },
   { id: 'RELIANCE', name: 'Reliance Industries', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.9, currency: '₹' },
-  { id: 'TCS', name: 'Tata Consultancy Services', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.2, currency: '₹' },
-  { id: 'HDFCBANK', name: 'HDFC Bank Ltd', country: 'India', category: 'Stocks', payout: 80, base: 1532.60, step: 0.6, currency: '₹' },
-
-  // 3. US Equities, Crypto & Commodities
   { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$' },
   { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 24.0, currency: '$' },
   { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.8, currency: '$' }
 ];
 
 const TIMEFRAMES = [
-  { label: '5s', sec: 5, candleCount: 40 },
-  { label: '15s', sec: 15, candleCount: 40 },
-  { label: '1m', sec: 60, candleCount: 45 },
-  { label: '5m', sec: 300, candleCount: 45 },
-  { label: '15m', sec: 900, candleCount: 45 },
-  { label: '1H', sec: 3600, candleCount: 50 },
-  { label: '1D', sec: 86400, candleCount: 55 },
-  { label: '1W', sec: 604800, candleCount: 60 },
-  { label: '1M', sec: 2592000, candleCount: 65 },
-  { label: '1Y', sec: 31536000, candleCount: 70 },
-  { label: '5Y', sec: 157680000, candleCount: 75 }
+  { label: '5s', sec: 5, tickCount: 160 },
+  { label: '15s', sec: 15, tickCount: 180 },
+  { label: '1m', sec: 60, tickCount: 200 },
+  { label: '5m', sec: 300, tickCount: 220 },
+  { label: '10m', sec: 600, tickCount: 240 },
+  { label: '15m', sec: 900, tickCount: 240 },
+  { label: '1H', sec: 3600, tickCount: 250 },
+  { label: '1D', sec: 86400, tickCount: 250 },
+  { label: '1W', sec: 604800, tickCount: 260 },
+  { label: '1M', sec: 2592000, tickCount: 280 },
+  { label: '1Y', sec: 31536000, tickCount: 300 },
+  { label: '5Y', sec: 157680000, tickCount: 320 }
 ];
 
 const AVAILABLE_INDICATORS = [
@@ -75,20 +65,22 @@ const AVAILABLE_INDICATORS = [
 
 export default function App() {
   const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[0]);
-  const [activeMode, setActiveMode] = useState('Fixed Time'); // 'Fixed Time' | 'InZone' | 'Forex' | 'Stocks'
+  const [activeMode, setActiveMode] = useState('InZone'); // 'Fixed Time' | 'InZone' | 'Forex' | 'Stocks'
   
-  // UI Interactive Popups & Active Drawers
+  // Interactive Drawers & Popups
   const [activeLeftDrawer, setActiveLeftDrawer] = useState(null); // 'indicators' | 'trades' | 'market' | 'home' | 'funded' | 'help' | null
   const [showChartTypeMenu, setShowChartTypeMenu] = useState(false);
   const [showTimeframeMenu, setShowTimeframeMenu] = useState(false);
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [indicatorSearch, setIndicatorSearch] = useState('');
   const [marketFilter, setMarketFilter] = useState('ALL');
 
-  // Chart Controls
-  const [chartType, setChartType] = useState('candles'); // 'area' | 'candles' | 'heikin' | 'bars'
-  const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[1]); // Default 15s
+  // Exact Olymp Trade Chart Type Selection
+  const [chartType, setChartType] = useState('area'); // 'area' | 'candles' | 'heikin' | 'bars'
+  const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[4]); // 10m default matching screenshot
   const [balance, setBalance] = useState(10000.0);
+  const [accountType, setAccountType] = useState('Demo'); // 'Demo' | 'Real'
   const [amount, setAmount] = useState(70);
   const [durationSec, setDurationSec] = useState(15);
   const [botActive, setBotActive] = useState(true);
@@ -96,103 +88,85 @@ export default function App() {
   // Indicators State
   const [activeIndicators, setActiveIndicators] = useState({
     alligator: false,
-    bollinger: true,
+    bollinger: false,
     donchian: false,
-    ema: true,
+    ema: false,
     ichimoku: false,
     keltner: false,
     parabolic: false,
-    sentiment: true
+    sentiment: false
   });
 
   const [latestPrice, setLatestPrice] = useState(selectedAsset.base);
-  const [countdown, setCountdown] = useState(15);
+  const [countdown, setCountdown] = useState(2);
+  const [ticks, setTicks] = useState([]);
   const [candles, setCandles] = useState([]);
   const [activeTrades, setActiveTrades] = useState([]);
   const [closedTrades, setClosedTrades] = useState([]);
 
-  const [aiTelemetry, setAiTelemetry] = useState({
-    rsi: 52.4,
-    trend: 'BULLISH',
-    winRate: 89,
-    lastReason: 'Dynamic Volatility Breakout & Institutional VWAP holding firm.'
-  });
-
   const canvasRef = useRef(null);
 
-  // 1. Initial Candles Generation
+  // 1. Initial High-Frequency Wave Data Generation (Mimicking Olymp Trade Tick Density)
   useEffect(() => {
     let p = selectedAsset.base;
-    const count = selectedTf.candleCount;
-    const initialList = [];
-    const multiplier = selectedTf.sec > 86400 ? (selectedTf.sec / 86400) * 0.15 : 1;
+    const totalTicks = selectedTf.tickCount;
+    const tickList = [];
+    const candleList = [];
 
-    for (let i = 0; i < count; i++) {
-      const open = p;
-      const drift = (Math.random() - 0.495) * (selectedAsset.step * 2.2 * multiplier);
-      const close = Number((open + drift).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
-      const high = Number((Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
-      const low = Number((Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
-      initialList.push({ open, high, low, close });
-      p = close;
+    let waveTrend = (Math.random() - 0.5) * 0.2;
+    for (let i = 0; i < totalTicks; i++) {
+      if (i % 25 === 0) waveTrend = (Math.random() - 0.498) * 0.25;
+      const noise = (Math.random() - 0.495) * selectedAsset.step * 0.8;
+      p = +(p + noise + waveTrend * selectedAsset.step * 0.3).toFixed(4);
+      tickList.push(p);
+
+      // Aggregate into candlesticks for candlestick chart modes
+      if (i % 4 === 0) {
+        const open = p;
+        const close = +(open + (Math.random() - 0.495) * selectedAsset.step * 2).toFixed(4);
+        const high = +(Math.max(open, close) + Math.random() * selectedAsset.step * 0.6).toFixed(4);
+        const low = +(Math.min(open, close) - Math.random() * selectedAsset.step * 0.6).toFixed(4);
+        candleList.push({ open, high, low, close });
+      }
     }
-    setCandles(initialList);
+
+    setTicks(tickList);
+    setCandles(candleList);
     setLatestPrice(p);
   }, [selectedAsset, selectedTf]);
 
-  // 2. Real-Time Price Engine & AI Automation Loop
+  // 2. Real-Time Tick Pipeline & AI Automation Engine
   useEffect(() => {
     const timer = setInterval(() => {
-      setCandles(prev => {
-        if (!prev || prev.length === 0) return prev;
-        const list = [...prev];
-        const last = { ...list[list.length - 1] };
-        const change = (Math.random() - 0.495) * selectedAsset.step;
-        const newClose = Number((last.close + change).toFixed(selectedAsset.step < 0.01 ? 4 : 2));
+      setTicks(prevTicks => {
+        if (!prevTicks || prevTicks.length === 0) return prevTicks;
+        const last = prevTicks[prevTicks.length - 1];
+        const delta = (Math.random() - 0.495) * selectedAsset.step * 0.85;
+        const nextPrice = Number((last + delta).toFixed(4));
+        const updated = [...prevTicks.slice(1), nextPrice];
+        setLatestPrice(nextPrice);
 
-        last.close = newClose;
-        last.high = Math.max(last.high, newClose);
-        last.low = Math.min(last.low, newClose);
-        list[list.length - 1] = last;
+        // Update corresponding last candle
+        setCandles(prevCandles => {
+          if (!prevCandles || prevCandles.length === 0) return prevCandles;
+          const cList = [...prevCandles];
+          const lastC = { ...cList[cList.length - 1] };
+          lastC.close = nextPrice;
+          lastC.high = Math.max(lastC.high, nextPrice);
+          lastC.low = Math.min(lastC.low, nextPrice);
+          cList[cList.length - 1] = lastC;
+          return cList;
+        });
 
-        setLatestPrice(newClose);
-
-        // Calculate RSI(14) Proxy & Real AI Opportunity Execution
-        if (list.length >= 14) {
-          let gains = 0, losses = 0;
-          for (let i = list.length - 14; i < list.length; i++) {
-            const diff = list[i].close - list[i].open;
-            if (diff >= 0) gains += diff;
-            else losses += Math.abs(diff);
-          }
-          const rs = losses === 0 ? 100 : gains / losses;
-          const currentRsi = Number((100 - (100 / (1 + rs))).toFixed(1));
-
-          if (botActive && activeTrades.length < 2) {
-            if (currentRsi < 34 && Math.random() > 0.45) {
-              setAiTelemetry({
-                rsi: currentRsi,
-                trend: 'OVERSOLD REVERSAL',
-                winRate: 91,
-                lastReason: `RSI Oversold (${currentRsi}) + Lower Support Wick Rejection`
-              });
-              executeOrder('CALL', true, 'AI Oversold Reversal');
-            } else if (currentRsi > 66 && Math.random() > 0.45) {
-              setAiTelemetry({
-                rsi: currentRsi,
-                trend: 'OVERBOUGHT EXHAUSTION',
-                winRate: 88,
-                lastReason: `RSI Overbought (${currentRsi}) + Upper Resistance Breakdown`
-              });
-              executeOrder('PUT', true, 'AI Overbought Exhaustion');
-            }
-          }
+        // AI Autopilot Trigger
+        if (botActive && activeTrades.length < 1 && Math.random() > 0.88) {
+          executeOrder(Math.random() > 0.5 ? 'UP' : 'DOWN', true);
         }
 
-        return list;
+        return updated;
       });
 
-      // Update Active Order Timers
+      // Update Active Order Durations
       setActiveTrades(prev => prev.map(tr => ({
         ...tr,
         remaining: Math.max(0, tr.remaining - 1)
@@ -202,9 +176,9 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [selectedAsset, botActive, activeTrades.length, durationSec, latestPrice]);
+  }, [selectedAsset, botActive, activeTrades.length, durationSec]);
 
-  // Order Expiry Manager
+  // 3. Trade Expiry Manager
   useEffect(() => {
     const expired = activeTrades.filter(t => t.remaining <= 0);
     if (expired.length > 0) {
@@ -226,10 +200,10 @@ export default function App() {
     }
   }, [activeTrades, latestPrice]);
 
-  // 3. Pixel-Perfect Canvas Rendering
+  // 4. Ultra-Accurate Canvas Rendering (Olymp Trade Area Chart + InZone Corridor)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || candles.length === 0 || !canvas.parentElement) return;
+    if (!canvas || ticks.length === 0 || !canvas.parentElement) return;
     const ctx = canvas.getContext('2d');
     const width = canvas.parentElement.clientWidth || 800;
     const height = canvas.parentElement.clientHeight || 500;
@@ -238,13 +212,14 @@ export default function App() {
     canvas.height = height * (window.devicePixelRatio || 1);
     ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
 
+    // Deep Dark Olymp Trade Canvas Background (#111316)
     ctx.fillStyle = '#101216';
     ctx.fillRect(0, 0, width, height);
 
     // Subtle Grid Lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
     ctx.lineWidth = 1;
-    for (let y = 30; y < height; y += 45) {
+    for (let y = 30; y < height; y += 42) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
@@ -257,96 +232,62 @@ export default function App() {
       ctx.stroke();
     }
 
-    let minP = Infinity;
-    let maxP = -Infinity;
-    candles.forEach(c => {
-      minP = Math.min(minP, c.low);
-      maxP = Math.max(maxP, c.high);
-    });
-    const padding = (maxP - minP) * 0.3 || 0.001;
+    // Min/Max Scale Calculation
+    let minP = Math.min(...ticks);
+    let maxP = Math.max(...ticks);
+    const padding = (maxP - minP) * 0.28 || 0.001;
     minP -= padding;
     maxP += padding;
 
     const chartHeight = height - 40;
     const getY = (price) => chartHeight - ((price - minP) / (maxP - minP)) * chartHeight + 20;
-    const candleWidth = Math.max(7, (width - 240) / candles.length - 5);
 
-    // Bollinger Bands Indicator
-    if (activeIndicators.bollinger && candles.length >= 15) {
-      const upperBand = [];
-      const lowerBand = [];
-      for (let i = 14; i < candles.length; i++) {
-        const slice = candles.slice(i - 14, i + 1);
-        const mean = slice.reduce((acc, c) => acc + c.close, 0) / 15;
-        const variance = slice.reduce((acc, c) => acc + Math.pow(c.close - mean, 2), 0) / 15;
-        const stdDev = Math.sqrt(variance);
-        const x = i * (candleWidth + 5) + 20 + candleWidth / 2;
-        upperBand.push({ x, y: getY(mean + stdDev * 2) });
-        lowerBand.push({ x, y: getY(mean - stdDev * 2) });
-      }
-
-      if (upperBand.length > 1) {
-        ctx.beginPath();
-        ctx.moveTo(upperBand[0].x, upperBand[0].y);
-        upperBand.forEach(p => ctx.lineTo(p.x, p.y));
-        for (let j = lowerBand.length - 1; j >= 0; j--) {
-          ctx.lineTo(lowerBand[j].x, lowerBand[j].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.03)';
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // EMA Indicator
-    if (activeIndicators.ema && candles.length > 5) {
-      ctx.beginPath();
-      const k = 2 / (20 + 1);
-      let ema = candles[0].close;
-      candles.forEach((c, i) => {
-        ema = c.close * k + ema * (1 - k);
-        const x = i * (candleWidth + 5) + 20 + candleWidth / 2;
-        const y = getY(ema);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.strokeStyle = '#00b0ff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // Chart Style Rendering
+    // A. AREA CHART RENDERING (Matching Olymp Trade Screenshot)
     if (chartType === 'area') {
+      const stepX = (width - 180) / (ticks.length - 1);
+      
       ctx.beginPath();
-      candles.forEach((c, i) => {
-        const x = i * (candleWidth + 5) + 20 + candleWidth / 2;
-        const y = getY(c.close);
+      ticks.forEach((price, i) => {
+        const x = i * stepX + 15;
+        const y = getY(price);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
 
-      const lastX = (candles.length - 1) * (candleWidth + 5) + 20 + candleWidth / 2;
-      const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-      gradient.addColorStop(0, 'rgba(0, 230, 118, 0.35)');
-      gradient.addColorStop(1, 'rgba(0, 230, 118, 0.0)');
+      // Gradient Fill Under the Area Wave
+      const lastX = (ticks.length - 1) * stepX + 15;
+      const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight + 20);
+      gradient.addColorStop(0, 'rgba(77, 208, 225, 0.15)');
+      gradient.addColorStop(0.7, 'rgba(77, 208, 225, 0.04)');
+      gradient.addColorStop(1, 'rgba(77, 208, 225, 0.0)');
+      
       ctx.lineTo(lastX, chartHeight + 20);
-      ctx.lineTo(20, chartHeight + 20);
+      ctx.lineTo(15, chartHeight + 20);
+      ctx.closePath();
       ctx.fillStyle = gradient;
       ctx.fill();
 
-      ctx.strokeStyle = '#00e676';
-      ctx.lineWidth = 2;
+      // Top Crisp Cyan/Teal Glowing Wave Line
+      ctx.beginPath();
+      ticks.forEach((price, i) => {
+        const x = i * stepX + 15;
+        const y = getY(price);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#4dd0e1';
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
       ctx.stroke();
+
     } else if (chartType === 'bars') {
+      // Bar Chart Rendering
+      const candleWidth = Math.max(6, (width - 240) / candles.length - 4);
       candles.forEach((c, i) => {
-        const x = i * (candleWidth + 5) + 20;
+        const x = i * (candleWidth + 4) + 20;
         const isUp = c.close >= c.open;
         ctx.strokeStyle = isUp ? '#00e676' : '#ff4d6d';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, getY(c.high));
         ctx.lineTo(x + candleWidth / 2, getY(c.low));
@@ -360,9 +301,12 @@ export default function App() {
         ctx.lineTo(x + candleWidth, getY(c.close));
         ctx.stroke();
       });
+
     } else {
+      // Candlesticks & Heikin Ashi Rendering
+      const candleWidth = Math.max(7, (width - 240) / candles.length - 4);
       candles.forEach((c, i) => {
-        const x = i * (candleWidth + 5) + 20;
+        const x = i * (candleWidth + 4) + 20;
         let openVal = c.open;
         let closeVal = c.close;
         
@@ -376,7 +320,7 @@ export default function App() {
         const color = isUp ? '#26a69a' : '#ef5350';
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, getY(c.high));
         ctx.lineTo(x + candleWidth / 2, getY(c.low));
@@ -391,33 +335,14 @@ export default function App() {
       });
     }
 
-    // InZone Target Corridor Box (When in InZone Mode)
+    // B. INZONE TARGET BRACKET & BOUNDARY CORRIDORS (Exact Screenshot)
     const inZoneY = getY(latestPrice);
-    const boxWidth = 160;
+    const boxWidth = 165;
     const boxStart = width - boxWidth - 30;
-
-    if (activeMode === 'InZone') {
-      ctx.fillStyle = 'rgba(30, 58, 138, 0.2)';
-      ctx.fillRect(boxStart, inZoneY - 34, boxWidth, 68);
-
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(boxStart, inZoneY - 34);
-      ctx.lineTo(boxStart + boxWidth, inZoneY - 34);
-      ctx.moveTo(boxStart, inZoneY + 34);
-      ctx.lineTo(boxStart + boxWidth, inZoneY + 34);
-      ctx.stroke();
-
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = 'bold 10px Inter, sans-serif';
-      ctx.fillText('+0.003%', boxStart + boxWidth - 45, inZoneY - 38);
-      ctx.fillText('-0.003%', boxStart + boxWidth - 45, inZoneY + 46);
-    }
 
     // Dotted Vertical Line for "Trade start"
     ctx.setLineDash([3, 4]);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
     ctx.beginPath();
     ctx.moveTo(boxStart, 20);
     ctx.lineTo(boxStart, chartHeight + 20);
@@ -429,7 +354,7 @@ export default function App() {
     ctx.fillText('Trade', boxStart - 32, 45);
     ctx.fillText('start', boxStart - 30, 56);
 
-    // Flag Pin Icon
+    // Flag Pin Icon at the Top of Dotted Line
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(boxStart, 26, 7, 0, Math.PI * 2);
@@ -438,46 +363,55 @@ export default function App() {
     ctx.font = 'bold 9px sans-serif';
     ctx.fillText('⚑', boxStart - 3, 29);
 
-    // Live White Price Tag on Right Scale
+    // InZone Corridor Bracket & Percentages (+0.003% & -0.003%)
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 1.2;
+    
+    // Top boundary bracket line
+    ctx.beginPath();
+    ctx.moveTo(boxStart, inZoneY - 26);
+    ctx.lineTo(boxStart + 45, inZoneY - 26);
+    ctx.stroke();
+
+    // Bottom boundary bracket line
+    ctx.beginPath();
+    ctx.moveTo(boxStart, inZoneY + 26);
+    ctx.lineTo(boxStart + 45, inZoneY + 26);
+    ctx.stroke();
+
+    // Horizontal Price Tracking Level Line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(boxStart, inZoneY);
+    ctx.lineTo(width - 75, inZoneY);
+    ctx.stroke();
+
+    // Blue Percentage Targets
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.fillText('+0.003%', boxStart + 52, inZoneY - 22);
+    ctx.fillText('-0.003%', boxStart + 52, inZoneY + 30);
+
+    // Live White Price Tag on Axis
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(width - 72, inZoneY - 10, 72, 20);
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 11px monospace';
-    ctx.fillText(latestPrice.toFixed(selectedAsset.step < 0.01 ? 4 : 2), width - 68, inZoneY + 4);
+    ctx.fillText(latestPrice.toFixed(4), width - 68, inZoneY + 4);
 
-    // Active Countdown Pill
-    ctx.fillStyle = '#1e242d';
-    ctx.fillRect(boxStart + 16, inZoneY - 10, 44, 20);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('00:0' + (countdown < 10 ? '0' : '') + countdown, boxStart + 20, inZoneY + 4);
-
-    // Active Trade Markers & Horizontal Strike Lines
+    // Active Trade Pins
     activeTrades.forEach(tr => {
       const trY = getY(tr.entry);
-      const isUp = tr.direction === 'UP' || tr.direction === 'CALL' || tr.direction === 'BUY';
-      
-      ctx.fillStyle = isUp ? '#00e676' : '#ff4d6d';
+      ctx.fillStyle = tr.direction === 'UP' ? '#00e676' : '#ff4d6d';
       ctx.beginPath();
-      ctx.arc(boxStart, trY, 6, 0, Math.PI * 2);
+      ctx.arc(boxStart, trY, 5, 0, Math.PI * 2);
       ctx.fill();
-
-      // Horizontal Strike Line
-      ctx.strokeStyle = isUp ? 'rgba(0, 230, 118, 0.6)' : 'rgba(255, 77, 109, 0.6)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(boxStart - 120, trY);
-      ctx.lineTo(width - 75, trY);
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillText((tr.isAi ? 'AI ' : '') + tr.direction + ' ' + selectedAsset.currency + tr.amount, boxStart - 90, trY - 5);
     });
 
-  }, [candles, latestPrice, chartType, activeTrades, activeIndicators, countdown, activeMode]);
+  }, [ticks, candles, latestPrice, chartType, activeTrades, activeIndicators, countdown]);
 
-  const executeOrder = (direction, isAi = false, reason = 'Manual Order') => {
+  const executeOrder = (direction, isAi = false) => {
     const entry = latestPrice;
     const newTrade = {
       id: Date.now(),
@@ -489,10 +423,8 @@ export default function App() {
       payout: selectedAsset.payout,
       remaining: durationSec,
       totalDuration: durationSec,
-      isAi,
-      reason
+      isAi
     };
-
     setActiveTrades(prev => [newTrade, ...prev]);
   };
 
@@ -500,25 +432,18 @@ export default function App() {
     ind.name.toLowerCase().includes(indicatorSearch.toLowerCase())
   );
 
-  const filteredAssets = ALL_MARKETS.filter(item => {
-    const matchesCategory = marketFilter === 'ALL' || item.country === marketFilter || item.category === marketFilter;
-    return matchesCategory;
-  });
-
   return (
     <div className="flex h-screen w-screen bg-[#0e0f12] text-[#e6edf3] font-sans overflow-hidden select-none">
       
-      {/* 1. LEFT STATIC NAVIGATION DOCK (Every Tab Has an Assigned Drawer/Action) */}
+      {/* 1. LEFT STATIC NAVIGATION DOCK */}
       <div className="w-14 bg-[#121316] border-r border-[#1e2025] flex flex-col justify-between items-center py-3 z-30">
         <div className="flex flex-col items-center gap-5">
-          {/* Logo */}
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-black text-white text-base">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5 text-white">
               <path d="M7 17l9.2-9.2M17 17V7H7" />
             </svg>
           </div>
 
-          {/* Home */}
           <button 
             onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'home' ? null : 'home')}
             className={`flex flex-col items-center gap-1 text-[10px] transition ${activeLeftDrawer === 'home' ? 'text-[#00e676]' : 'text-gray-400 hover:text-white'}`}
@@ -527,7 +452,6 @@ export default function App() {
             <span>Home</span>
           </button>
           
-          {/* Funded */}
           <button 
             onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'funded' ? null : 'funded')}
             className={`flex flex-col items-center gap-1 text-[10px] transition ${activeLeftDrawer === 'funded' ? 'text-[#00e676]' : 'text-gray-400 hover:text-white'}`}
@@ -536,7 +460,6 @@ export default function App() {
             <span>Funded</span>
           </button>
 
-          {/* Trades */}
           <button 
             onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'trades' ? null : 'trades')}
             className={`flex flex-col items-center gap-1 text-[10px] relative transition ${activeLeftDrawer === 'trades' ? 'text-[#00e676]' : 'text-gray-400 hover:text-white'}`}
@@ -548,7 +471,6 @@ export default function App() {
             )}
           </button>
 
-          {/* Market */}
           <button 
             onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'market' ? null : 'market')}
             className={`flex flex-col items-center gap-1 text-[10px] transition ${activeLeftDrawer === 'market' ? 'text-[#00e676]' : 'text-gray-400 hover:text-white'}`}
@@ -561,7 +483,7 @@ export default function App() {
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="text-[10px] text-gray-500 font-mono">
             <span className="inline-block w-2 h-2 rounded-full bg-[#00e676] mr-1 animate-pulse"></span>
-            6980
+            7184
             <div className="text-[9px]">online</div>
           </div>
           <button 
@@ -573,21 +495,15 @@ export default function App() {
         </div>
       </div>
 
-      {/* 2. DYNAMIC LEFT DRAWER SYSTEM */}
-      
-      {/* 2.1 Indicators Drawer */}
+      {/* 2. DYNAMIC LEFT SLIDE-OUT DRAWERS */}
       {activeLeftDrawer === 'indicators' && (
         <div className="w-72 bg-[#14161a] border-r border-[#1e2025] flex flex-col z-20 animate-in slide-in-from-left duration-200">
           <div className="p-4 border-b border-[#1e2025] flex items-center justify-between">
             <h2 className="text-base font-bold text-white">Technical Analysis</h2>
-            <button 
-              onClick={() => setActiveLeftDrawer(null)}
-              className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1f2228]"
-            >
+            <button onClick={() => setActiveLeftDrawer(null)} className="text-gray-400 hover:text-white p-1">
               <X size={18} />
             </button>
           </div>
-
           <div className="p-4 flex-1 overflow-y-auto space-y-4">
             <div className="bg-gradient-to-br from-[#6366f1] via-[#8b5cf6] to-[#a855f7] rounded-2xl p-4 text-white relative overflow-hidden shadow-lg shadow-purple-900/20">
               <div className="relative z-10">
@@ -604,76 +520,56 @@ export default function App() {
                   {botActive ? 'Strategy Active ✓' : 'Enable Strategy'}
                 </button>
               </div>
-              <div className="absolute -bottom-3 -right-3 w-16 h-16 bg-black/25 rounded-full blur-sm"></div>
             </div>
 
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
-                placeholder="Search indicators..."
+                placeholder="Search"
                 value={indicatorSearch}
                 onChange={(e) => setIndicatorSearch(e.target.value)}
                 className="w-full bg-[#1b1e24] border border-[#262931] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00e676]"
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-2">
-                <span className="flex items-center gap-1.5">
-                  <Compass size={14} /> Indicators
-                </span>
-                <ChevronDown size={14} />
-              </div>
-
-              <div className="space-y-1">
-                {filteredIndicators.map(ind => (
-                  <button
-                    key={ind.id}
-                    onClick={() => setActiveIndicators(prev => ({ ...prev, [ind.id]: !prev[ind.id] }))}
-                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl text-left text-xs text-gray-300 hover:text-white hover:bg-[#1b1e24] transition"
-                  >
-                    <span>{ind.name}</span>
-                    {activeIndicators[ind.id] && (
-                      <Check size={14} className="text-[#00e676] font-bold" />
-                    )}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-1">
+              {filteredIndicators.map(ind => (
+                <button
+                  key={ind.id}
+                  onClick={() => setActiveIndicators(prev => ({ ...prev, [ind.id]: !prev[ind.id] }))}
+                  className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl text-left text-xs text-gray-300 hover:text-white hover:bg-[#1b1e24] transition"
+                >
+                  <span>{ind.name}</span>
+                  {activeIndicators[ind.id] && <Check size={14} className="text-[#00e676] font-bold" />}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* 2.2 Trades Drawer */}
+      {/* Trades Drawer */}
       {activeLeftDrawer === 'trades' && (
         <div className="w-80 bg-[#14161a] border-r border-[#1e2025] flex flex-col z-20 animate-in slide-in-from-left duration-200">
           <div className="p-4 border-b border-[#1e2025] flex items-center justify-between">
             <h2 className="text-base font-bold text-white">Trades Overview</h2>
-            <button 
-              onClick={() => setActiveLeftDrawer(null)}
-              className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1f2228]"
-            >
+            <button onClick={() => setActiveLeftDrawer(null)} className="text-gray-400 hover:text-white p-1">
               <X size={18} />
             </button>
           </div>
           <div className="p-4 flex-1 overflow-y-auto space-y-4">
-            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Executions ({activeTrades.length})</div>
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Trades ({activeTrades.length})</div>
             {activeTrades.length === 0 ? (
-              <div className="text-xs text-gray-500 py-2">No open positions currently running.</div>
+              <div className="text-xs text-gray-500 py-2">No active trades running.</div>
             ) : (
               activeTrades.map(tr => (
                 <div key={tr.id} className="bg-[#1b1e24] p-3 rounded-xl border border-[#262931] flex flex-col gap-1.5 text-xs">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-white">{tr.market}</span>
-                    <span className={`font-mono font-black ${tr.direction.includes('UP') || tr.direction.includes('CALL') || tr.direction.includes('BUY') ? 'text-[#00e676]' : 'text-[#ff4d6d]'}`}>
-                      {tr.direction}
-                    </span>
+                    <span className="font-mono font-bold text-[#00e676]">{tr.remaining}s left</span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-gray-400">
-                    <span>Entry: {tr.entry}</span>
-                    <span className="font-mono text-[#00e676] font-bold">{tr.remaining}s left</span>
-                  </div>
+                  <div className="text-[11px] text-gray-400">Entry: {tr.entry}</div>
                   <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1">
                     <div 
                       className="bg-[#00e676] h-full transition-all duration-1000"
@@ -684,7 +580,7 @@ export default function App() {
               ))
             )}
 
-            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Trade History ({closedTrades.length})</div>
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Closed Trades ({closedTrades.length})</div>
             {closedTrades.map(tr => (
               <div key={tr.id} className="bg-[#1b1e24] p-3 rounded-xl border border-[#262931] flex justify-between items-center text-xs">
                 <div>
@@ -700,95 +596,12 @@ export default function App() {
         </div>
       )}
 
-      {/* 2.3 Market Drawer */}
-      {activeLeftDrawer === 'market' && (
-        <div className="w-80 bg-[#14161a] border-r border-[#1e2025] flex flex-col z-20 animate-in slide-in-from-left duration-200">
-          <div className="p-4 border-b border-[#1e2025] flex items-center justify-between">
-            <h2 className="text-base font-bold text-white">Live Assets Directory</h2>
-            <button onClick={() => setActiveLeftDrawer(null)} className="text-gray-400 hover:text-white p-1">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="p-4 flex-1 overflow-y-auto space-y-2">
-            {ALL_MARKETS.map(asset => (
-              <div
-                key={asset.id}
-                onClick={() => {
-                  setSelectedAsset(asset);
-                  setLatestPrice(asset.base);
-                  setActiveLeftDrawer(null);
-                }}
-                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                  selectedAsset.id === asset.id ? 'bg-[#1e232c] border-[#00e676]' : 'bg-[#1b1e24] border-[#262931] hover:border-gray-500'
-                }`}
-              >
-                <div>
-                  <div className="font-bold text-xs text-white">{asset.name}</div>
-                  <div className="text-[10px] text-gray-400">{asset.country} • {asset.category}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-xs text-white">{asset.currency}{asset.base.toLocaleString()}</div>
-                  <div className="text-[10px] font-black text-[#00e676]">+{asset.payout}%</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 2.4 Funded Drawer */}
-      {activeLeftDrawer === 'funded' && (
-        <div className="w-80 bg-[#14161a] border-r border-[#1e2025] flex flex-col z-20 animate-in slide-in-from-left duration-200 p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1e2025] pb-3">
-            <h2 className="text-base font-bold text-white">Prop / Funded Account</h2>
-            <button onClick={() => setActiveLeftDrawer(null)} className="text-gray-400 hover:text-white">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="bg-[#1b1e24] p-4 rounded-2xl border border-[#262931] space-y-2">
-            <div className="text-xs text-gray-400">Capital Balance</div>
-            <div className="text-2xl font-black font-mono text-white">{selectedAsset.currency}{balance.toLocaleString()}</div>
-            <div className="text-[11px] text-[#00e676] font-bold">Status: Active Paper Sim</div>
-          </div>
-          <button 
-            onClick={() => setBalance(10000.0)}
-            className="w-full bg-[#1e232c] hover:bg-[#252b36] border border-[#2d3340] text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition"
-          >
-            <RotateCcw size={14} /> Reset Capital to 10,000
-          </button>
-        </div>
-      )}
-
-      {/* 2.5 Help Drawer */}
-      {activeLeftDrawer === 'help' && (
-        <div className="w-80 bg-[#14161a] border-r border-[#1e2025] flex flex-col z-20 animate-in slide-in-from-left duration-200 p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1e2025] pb-3">
-            <h2 className="text-base font-bold text-white">Terminal Help Guide</h2>
-            <button onClick={() => setActiveLeftDrawer(null)} className="text-gray-400 hover:text-white">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="space-y-3 text-xs text-gray-300">
-            <div>
-              <span className="font-bold text-white">Fixed Time Trading:</span> Predict if quote will be higher or lower when duration finishes.
-            </div>
-            <div>
-              <span className="font-bold text-white">InZone Trading:</span> Payout (+110%) is awarded if price stays within target corridors.
-            </div>
-            <div>
-              <span className="font-bold text-white">AI Autopilot:</span> Executes institutional mean-reversion signals automatically.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. MAIN TERMINAL CHART VIEWPORT */}
+      {/* 3. MAIN TERMINAL & CANVAS */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         
         {/* TOP BAR */}
         <div className="h-14 bg-[#121316] border-b border-[#1e2025] px-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
-            {/* Pill Navigation Tabs */}
             <div className="flex bg-[#1a1c21] p-1 rounded-xl text-xs font-semibold">
               {['Fixed Time', 'InZone', 'Forex', 'Stocks'].map(mode => (
                 <button
@@ -804,7 +617,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Asset Selector Pill (+) */}
             <button 
               onClick={() => setIsAssetModalOpen(true)}
               className="flex items-center gap-2 bg-[#1a1c21] hover:bg-[#22252c] border border-[#262931] px-3.5 py-1.5 rounded-xl transition"
@@ -821,21 +633,47 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-sm font-black font-mono text-white">
-                {selectedAsset.currency}{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <div className="relative">
+              <div 
+                onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                className="text-right cursor-pointer"
+              >
+                <div className="text-sm font-black font-mono text-white">
+                  {selectedAsset.currency}{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10px] text-gray-400 flex items-center justify-end gap-1">
+                  <span>{accountType} account</span>
+                  <ChevronDown size={11} />
+                </div>
               </div>
-              <div className="text-[10px] text-gray-400 flex items-center justify-end gap-1">
-                <span>Demo account</span>
-                <ChevronDown size={11} />
-              </div>
+
+              {showAccountDropdown && (
+                <div className="absolute right-0 top-12 bg-[#1a1c21] border border-[#262931] rounded-2xl p-2 w-48 shadow-2xl z-30 space-y-1">
+                  <button 
+                    onClick={() => { setAccountType('Demo'); setShowAccountDropdown(false); }}
+                    className="w-full text-left p-2 rounded-xl text-xs hover:bg-[#242730] text-white flex justify-between"
+                  >
+                    <span>Demo Account</span>
+                    <span className="font-mono text-[#00e676]">Ð10,000</span>
+                  </button>
+                  <button 
+                    onClick={() => { setAccountType('Real'); setShowAccountDropdown(false); }}
+                    className="w-full text-left p-2 rounded-xl text-xs hover:bg-[#242730] text-gray-400 hover:text-white flex justify-between"
+                  >
+                    <span>Real Account</span>
+                    <span className="font-mono text-gray-500">Ð0.00</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            <button className="bg-[#00e676] hover:bg-[#00c853] text-black font-black px-4 py-1.5 rounded-xl text-xs shadow-lg shadow-[#00e676]/20 transition">
+            <button 
+              onClick={() => setBalance(prev => prev + 1000)}
+              className="bg-[#00e676] hover:bg-[#00c853] text-black font-black px-4 py-1.5 rounded-xl text-xs shadow-lg shadow-[#00e676]/20 transition"
+            >
               Payments
             </button>
 
-            {/* Profile Avatar */}
             <div className="relative">
               <div className="w-8 h-8 rounded-full bg-emerald-700/60 flex items-center justify-center text-sm font-bold text-white border border-emerald-500/30">
                 👤
@@ -847,48 +685,14 @@ export default function App() {
           </div>
         </div>
 
-        {/* FULLSCREEN CANVAS */}
+        {/* CANVAS VIEWPORT */}
         <div className="flex-1 relative w-full h-full">
           <canvas ref={canvasRef} className="w-full h-full block" />
 
-          {/* 4. VERTICAL TOOL DOCK (Bottom-Left - Fully Wired) */}
+          {/* 4. VERTICAL TOOL DOCK (Bottom-Left - Matching Area Chart Screenshot) */}
           <div className="absolute left-6 bottom-8 z-20 flex flex-col gap-2">
             
-            {/* Timeframe Button */}
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setShowTimeframeMenu(!showTimeframeMenu);
-                  setShowChartTypeMenu(false);
-                }}
-                className="w-10 h-10 rounded-xl bg-[#1b1e24] border border-[#262931] hover:border-[#00e676] text-xs font-bold text-white flex items-center justify-center shadow-lg transition"
-              >
-                {selectedTf.label}
-              </button>
-
-              {/* Timeframes Popover (5s to 5 Years) */}
-              {showTimeframeMenu && (
-                <div className="absolute left-12 bottom-0 bg-[#17191f] border border-[#262931] rounded-2xl p-2 w-48 shadow-2xl z-30 grid grid-cols-3 gap-1">
-                  {TIMEFRAMES.map(tf => (
-                    <button
-                      key={tf.label}
-                      onClick={() => {
-                        setSelectedTf(tf);
-                        setDurationSec(Math.min(tf.sec, 300));
-                        setShowTimeframeMenu(false);
-                      }}
-                      className={`py-1.5 rounded-lg text-xs font-bold text-center transition ${
-                        selectedTf.label === tf.label ? 'bg-[#00e676] text-black' : 'text-gray-400 hover:text-white hover:bg-[#20232a]'
-                      }`}
-                    >
-                      {tf.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Chart Type Selector Button */}
+            {/* Chart Type Selector Button (Shows Area Wave Icon when Area Chart is Active) */}
             <div className="relative">
               <button 
                 onClick={() => {
@@ -899,7 +703,13 @@ export default function App() {
                   showChartTypeMenu ? 'bg-[#242730] border-[#00e676] text-[#00e676]' : 'bg-[#1b1e24] border-[#262931] text-gray-300 hover:text-white'
                 }`}
               >
-                <Sliders size={18} />
+                {chartType === 'area' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-[#4dd0e1]">
+                    <path d="M3 18l5-8 5 4 8-10" />
+                  </svg>
+                ) : (
+                  <Sliders size={18} />
+                )}
               </button>
 
               {/* Chart Types Popover */}
@@ -924,9 +734,7 @@ export default function App() {
                         <span className="text-sm">{item.icon}</span>
                         {item.label}
                       </span>
-                      {chartType === item.id && (
-                        <Check size={14} className="text-[#00e676]" />
-                      )}
+                      {chartType === item.id && <Check size={14} className="text-[#00e676]" />}
                     </button>
                   ))}
                 </div>
@@ -952,26 +760,51 @@ export default function App() {
             </button>
           </div>
 
-          {/* Bottom Zoom Controls */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center bg-[#1a1c21] border border-[#262931] rounded-xl p-1 z-10 shadow-lg">
+          {/* Bottom Zoom Controls with Active Timeframe Window Pill (Matching Screenshot: — 10m +) */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center bg-[#1a1c21] border border-[#262931] rounded-xl px-1 py-0.5 z-10 shadow-lg">
             <button 
               onClick={() => setSelectedTf(prev => TIMEFRAMES[Math.max(0, TIMEFRAMES.indexOf(prev) - 1)])}
-              className="px-3 py-1 text-gray-300 hover:text-white transition"
+              className="px-2.5 py-1 text-gray-400 hover:text-white transition text-xs"
             >
               —
             </button>
-            <div className="h-4 w-px bg-gray-700"></div>
+            <button 
+              onClick={() => setShowTimeframeMenu(!showTimeframeMenu)}
+              className="px-3 py-1 font-mono text-xs font-bold text-white hover:text-[#00e676] transition"
+            >
+              {selectedTf.label}
+            </button>
             <button 
               onClick={() => setSelectedTf(prev => TIMEFRAMES[Math.min(TIMEFRAMES.length - 1, TIMEFRAMES.indexOf(prev) + 1)])}
-              className="px-3 py-1 text-gray-300 hover:text-white transition"
+              className="px-2.5 py-1 text-gray-400 hover:text-white transition text-xs"
             >
               +
             </button>
+
+            {/* Timeframe Popover */}
+            {showTimeframeMenu && (
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-10 bg-[#17191f] border border-[#262931] rounded-2xl p-2 w-52 shadow-2xl z-30 grid grid-cols-4 gap-1">
+                {TIMEFRAMES.map(tf => (
+                  <button
+                    key={tf.label}
+                    onClick={() => {
+                      setSelectedTf(tf);
+                      setShowTimeframeMenu(false);
+                    }}
+                    className={`py-1.5 rounded-lg text-xs font-bold text-center transition ${
+                      selectedTf.label === tf.label ? 'bg-[#00e676] text-black' : 'text-gray-400 hover:text-white hover:bg-[#20232a]'
+                    }`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 5. RIGHT ORDER EXECUTION PANEL (Clickable Call / Put, Up / Down & Buy / Sell) */}
+      {/* 5. RIGHT ORDER EXECUTION PANEL */}
       <div className="w-72 bg-[#121316] border-l border-[#1e2025] p-4 flex flex-col justify-between z-20">
         <div className="space-y-4">
           
@@ -1020,10 +853,10 @@ export default function App() {
             </div>
           </div>
 
-          {/* ORDER EXECUTION BUTTONS (Context-Aware to Mode) */}
+          {/* Execution Buttons (Context-Aware to Mode) */}
           {activeMode === 'InZone' ? (
             <button
-              onClick={() => executeOrder('UP', false, 'Manual InZone Execution')}
+              onClick={() => executeOrder('UP', false)}
               className="w-full bg-[#00e676] hover:bg-[#00c853] active:scale-98 transition py-3.5 rounded-2xl text-black font-black text-base flex items-center justify-center shadow-lg shadow-[#00e676]/20"
             >
               Open Trade
@@ -1031,30 +864,29 @@ export default function App() {
           ) : activeMode === 'Forex' || activeMode === 'Stocks' ? (
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => executeOrder('BUY', false, 'Manual Long/Buy')}
+                onClick={() => executeOrder('BUY', false)}
                 className="bg-[#00e676] hover:bg-[#00c853] active:scale-95 transition py-3 rounded-2xl text-black font-black text-sm flex items-center justify-center gap-1 shadow-lg shadow-[#00e676]/20"
               >
-                <TrendingUp size={16} /> BUY / LONG
+                <TrendingUp size={16} /> BUY
               </button>
               <button
-                onClick={() => executeOrder('SELL', false, 'Manual Short/Sell')}
+                onClick={() => executeOrder('SELL', false)}
                 className="bg-[#ff4d6d] hover:bg-[#e63956] active:scale-95 transition py-3 rounded-2xl text-white font-black text-sm flex items-center justify-center gap-1 shadow-lg shadow-[#ff4d6d]/20"
               >
-                <TrendingDown size={16} /> SELL / SHORT
+                <TrendingDown size={16} /> SELL
               </button>
             </div>
           ) : (
-            // Fixed Time / Call & Put Mode
             <div className="grid grid-cols-1 gap-2.5">
               <button
-                onClick={() => executeOrder('CALL', false, 'Manual Call Trade')}
+                onClick={() => executeOrder('CALL', false)}
                 className="w-full bg-[#00e676] hover:bg-[#00c853] active:scale-98 transition py-3.5 rounded-2xl text-black font-black text-lg flex items-center justify-between px-5 shadow-lg shadow-[#00e676]/20"
               >
                 <span>Up / Call</span>
                 <TrendingUp size={24} />
               </button>
               <button
-                onClick={() => executeOrder('PUT', false, 'Manual Put Trade')}
+                onClick={() => executeOrder('PUT', false)}
                 className="w-full bg-[#ff4d6d] hover:bg-[#e63956] active:scale-98 transition py-3.5 rounded-2xl text-white font-black text-lg flex items-center justify-between px-5 shadow-lg shadow-[#ff4d6d]/20"
               >
                 <span>Down / Put</span>
@@ -1063,10 +895,10 @@ export default function App() {
             </div>
           )}
 
-          {/* Payout Calculation */}
+          {/* Exact Payout Guarantee Text */}
           <div className="text-center space-y-1">
             <div className="text-xs text-gray-300">
-              Potential profit: <span className="font-black text-[#00e676]">+{selectedAsset.currency}{(amount * (1 + selectedAsset.payout / 100)).toFixed(2)}</span> ({selectedAsset.payout}%)
+              You'll earn <span className="font-black text-[#00e676]">{selectedAsset.currency}{(amount * (1 + selectedAsset.payout / 100)).toFixed(2)}</span> if the quote is within the range as the trade closes.
             </div>
             <div 
               onClick={() => setActiveLeftDrawer('help')}
@@ -1077,7 +909,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* AI Autopilot Switch & Telemetry */}
+        {/* AI Autopilot Switch */}
         <div className="bg-[#1a1c21] border border-[#262931] rounded-2xl p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
@@ -1091,7 +923,7 @@ export default function App() {
             </button>
           </div>
           <div className="text-[11px] text-gray-400 leading-snug">
-            {aiTelemetry.lastReason}
+            InZone volatility corridor scanning for {selectedAsset.payout}% payout range closures.
           </div>
         </div>
       </div>
@@ -1104,30 +936,13 @@ export default function App() {
               <div className="text-lg font-black text-white flex items-center gap-2">
                 <Globe size={20} className="text-[#00e676]" /> All World Markets
               </div>
-              <button 
-                onClick={() => setIsAssetModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#1b1e24] hover:bg-[#262931] text-gray-300 flex items-center justify-center font-bold"
-              >
+              <button onClick={() => setIsAssetModalOpen(false)} className="w-8 h-8 rounded-full bg-[#1b1e24] text-gray-300">
                 ✕
               </button>
             </div>
 
-            <div className="flex gap-2 p-3 bg-[#121316] overflow-x-auto text-xs font-semibold">
-              {['ALL', 'India', 'Global', 'USA', 'Crypto', 'Commodities'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setMarketFilter(cat)}
-                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
-                    marketFilter === cat ? 'bg-[#00e676] text-black font-black' : 'bg-[#1a1c21] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
             <div className="p-4 overflow-y-auto space-y-2 flex-1">
-              {filteredAssets.map(asset => (
+              {ALL_MARKETS.map(asset => (
                 <div
                   key={asset.id}
                   onClick={() => {
@@ -1148,9 +963,7 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span className="font-mono text-sm text-gray-300">
-                      {asset.currency}{asset.base.toLocaleString()}
-                    </span>
+                    <span className="font-mono text-sm text-gray-300">{asset.currency}{asset.base.toLocaleString()}</span>
                     <span className="font-mono font-black text-sm text-[#00e676] bg-[#00e676]/10 px-2.5 py-1 rounded-lg">
                       {asset.payout}%
                     </span>
