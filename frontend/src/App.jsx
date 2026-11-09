@@ -425,9 +425,25 @@ export default function App() {
       totalDuration: durationSec,
       isAi
     };
-    setActiveTrades(prev => [newTrade, ...prev]);
-  };
 
+    setActiveTrades(prev => [newTrade, ...prev]);
+
+    // Send order to Render API -> Neon DB
+    fetch('https://ai-trading-bot-v1-8zli.onrender.com/api/orders/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        symbol: selectedAsset.id,
+        direction: direction,
+        amount: Number(amount),
+        entry_price: Number(entry),
+        duration_sec: Number(durationSec)
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log('Order logged in Neon DB:', data))
+    .catch(err => console.warn('Order dispatch notice:', err));
+  };
   const filteredIndicators = AVAILABLE_INDICATORS.filter(ind => 
     ind.name.toLowerCase().includes(indicatorSearch.toLowerCase())
   );
