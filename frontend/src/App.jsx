@@ -11,11 +11,11 @@ import {
   Bot, 
   HelpCircle, 
   Briefcase, 
-  Wallet,
-  Compass,
-  Activity,
-  Award
+  Wallet, 
+  Compass, 
+  Activity 
 } from 'lucide-react';
+
 const ALL_MARKETS = [
   // India (NSE / Groww)
   { id: 'NIFTY50', name: 'NIFTY 50', country: 'India', category: 'Indices', payout: 82, base: 22450.0, step: 4.2, currency: '₹' },
@@ -23,44 +23,51 @@ const ALL_MARKETS = [
   { id: 'RELIANCE', name: 'Reliance Ind.', country: 'India', category: 'Stocks', payout: 80, base: 2855.40, step: 0.9, currency: '₹' },
   { id: 'TCS', name: 'TCS Ltd.', country: 'India', category: 'Stocks', payout: 80, base: 3892.15, step: 1.2, currency: '₹' },
   { id: 'HDFCBANK', name: 'HDFC Bank', country: 'India', category: 'Stocks', payout: 80, base: 1530.10, step: 0.6, currency: '₹' },
-  // Forex & OTC
+
+  // Forex & OTC (Olymp / Quotex style)
   { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 92, base: 1.08642, step: 0.00018, currency: '$' },
   { id: 'GBPUSD_OTC', name: 'GBP/USD (OTC)', country: 'Global', category: 'OTC Forex', payout: 89, base: 1.27315, step: 0.00022, currency: '$' },
   { id: 'USDJPY', name: 'USD/JPY', country: 'Global', category: 'Forex', payout: 85, base: 154.62, step: 0.04, currency: '¥' },
   { id: 'USDINR', name: 'USD/INR', country: 'India', category: 'Forex', payout: 84, base: 83.45, step: 0.03, currency: '₹' },
-  // US Tech
+
+  // US Tech Stocks
   { id: 'NVDA', name: 'NVIDIA Corp', country: 'USA', category: 'US Stocks', payout: 87, base: 885.30, step: 1.5, currency: '$' },
   { id: 'AAPL', name: 'Apple Inc.', country: 'USA', category: 'US Stocks', payout: 85, base: 182.40, step: 0.5, currency: '$' },
   { id: 'TSLA', name: 'Tesla Inc.', country: 'USA', category: 'US Stocks', payout: 88, base: 175.80, step: 0.9, currency: '$' },
-  // Crypto & Metals
+
+  // Crypto & Commodities
   { id: 'BTCUSDT', name: 'Bitcoin (BTC)', country: 'Crypto', category: 'Crypto', payout: 90, base: 88450.0, step: 24.0, currency: '$' },
   { id: 'ETHUSDT', name: 'Ethereum (ETH)', country: 'Crypto', category: 'Crypto', payout: 88, base: 3340.50, step: 2.1, currency: '$' },
   { id: 'XAUUSD', name: 'Gold (XAU/USD)', country: 'Commodities', category: 'Metals', payout: 86, base: 2335.80, step: 0.8, currency: '$' }
 ];
+
 const TIMEFRAMES = [
-  { label: '5s', sec: 5, candleCount: 50 },
-  { label: '15s', sec: 15, candleCount: 50 },
-  { label: '1m', sec: 60, candleCount: 60 },
-  { label: '5m', sec: 300, candleCount: 60 },
-  { label: '15m', sec: 900, candleCount: 60 },
-  { label: '1H', sec: 3600, candleCount: 60 },
-  { label: '1D', sec: 86400, candleCount: 75 },
-  { label: '1W', sec: 604800, candleCount: 80 },
-  { label: '1M', sec: 2592000, candleCount: 90 },
-  { label: '1Y', sec: 31536000, candleCount: 100 },
-  { label: '5Y', sec: 157680000, candleCount: 120 }
+  { label: '5s', sec: 5, candleCount: 45 },
+  { label: '15s', sec: 15, candleCount: 45 },
+  { label: '1m', sec: 60, candleCount: 50 },
+  { label: '5m', sec: 300, candleCount: 50 },
+  { label: '15m', sec: 900, candleCount: 50 },
+  { label: '1H', sec: 3600, candleCount: 55 },
+  { label: '1D', sec: 86400, candleCount: 60 },
+  { label: '1W', sec: 604800, candleCount: 65 },
+  { label: '1M', sec: 2592000, candleCount: 70 },
+  { label: '1Y', sec: 31536000, candleCount: 75 },
+  { label: '5Y', sec: 157680000, candleCount: 80 }
 ];
+
 export default function App() {
   const [selectedAsset, setSelectedAsset] = useState(ALL_MARKETS[0]);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [marketFilter, setMarketFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  
   const [chartType, setChartType] = useState('candles');
   const [selectedTf, setSelectedTf] = useState(TIMEFRAMES[0]);
   const [balance, setBalance] = useState(99230.0);
   const [amount, setAmount] = useState(70);
   const [durationSec, setDurationSec] = useState(5);
   const [botActive, setBotActive] = useState(true);
+  
   const [latestPrice, setLatestPrice] = useState(selectedAsset.base);
   const [countdown, setCountdown] = useState(5);
   const [candles, setCandles] = useState([]);
@@ -69,25 +76,29 @@ export default function App() {
     { id: 1, user: 'AI Quant Engine', dir: 'UP', duration: '5s' },
     { id: 2, user: 'NiftyScalper', dir: 'DOWN', duration: '15s' }
   ]);
+  
   const [aiTelemetry, setAiTelemetry] = useState({
     rsi: 52.4,
     trend: 'BULLISH',
     winRate: 84,
-    lastReason: 'Scanning RSI(14) & Volume breakout...'
+    lastReason: 'Scanning RSI(14) & Volume breakouts...'
   });
+
   const canvasRef = useRef(null);
-  // Generate Realistic Scale Data across Minutes to 5 Years
+
+  // 1. Generate Historical Scale Candles (from 5s up to 5 Years)
   useEffect(() => {
     let p = selectedAsset.base;
     const count = selectedTf.candleCount;
     const initialList = [];
     const multiplier = selectedTf.sec > 86400 ? (selectedTf.sec / 86400) * 0.15 : 1;
+
     for (let i = 0; i < count; i++) {
       const open = p;
       const drift = (Math.random() - 0.492) * (selectedAsset.step * 2.2 * multiplier);
-      const close = +(open + drift).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
-      const high = +(Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
-      const low = +(Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
+      const close = Number((open + drift).toFixed(selectedAsset.step < 0.01 ? 5 : 2));
+      const high = Number((Math.max(open, close) + Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2));
+      const low = Number((Math.min(open, close) - Math.random() * selectedAsset.step * multiplier).toFixed(selectedAsset.step < 0.01 ? 5 : 2));
       const volume = Math.floor(Math.random() * 8000 + 1200);
       initialList.push({ open, high, low, close, volume });
       p = close;
@@ -95,7 +106,8 @@ export default function App() {
     setCandles(initialList);
     setLatestPrice(p);
   }, [selectedAsset, selectedTf]);
-  // Real-Time High-Frequency Candle Engine & Quant Scanner
+
+  // 2. Real-Time Price Ticks & Intelligent Quant Signal Scanner
   useEffect(() => {
     const timer = setInterval(() => {
       setCandles(prev => {
@@ -103,14 +115,17 @@ export default function App() {
         const list = [...prev];
         const last = { ...list[list.length - 1] };
         const change = (Math.random() - 0.495) * selectedAsset.step;
-        const newClose = +(last.close + change).toFixed(selectedAsset.step < 0.01 ? 5 : 2);
+        const newClose = Number((last.close + change).toFixed(selectedAsset.step < 0.01 ? 5 : 2));
+
         last.close = newClose;
         last.high = Math.max(last.high, newClose);
         last.low = Math.min(last.low, newClose);
         last.volume = (last.volume || 2000) + Math.floor(Math.random() * 80);
         list[list.length - 1] = last;
+
         setLatestPrice(newClose);
-        // Calculate RSI(14) proxy on the fly
+
+        // Compute RSI(14)
         if (list.length >= 14) {
           let gains = 0, losses = 0;
           for (let i = list.length - 14; i < list.length; i++) {
@@ -119,53 +134,61 @@ export default function App() {
             else losses += Math.abs(diff);
           }
           const rs = losses === 0 ? 100 : gains / losses;
-          const currentRsi = +(100 - (100 / (1 + rs))).toFixed(1);
-          // Intelligent AI Opportunity Trigger
+          const currentRsi = Number((100 - (100 / (1 + rs))).toFixed(1));
+
+          // Real AI Opportunity Execution Rule
           if (botActive && activeTrades.length < 2) {
-            if (currentRsi < 32 && Math.random() > 0.4) {
+            if (currentRsi < 32 && Math.random() > 0.45) {
               setAiTelemetry({
                 rsi: currentRsi,
                 trend: 'OVERSOLD REVERSAL',
                 winRate: 88,
-                lastReason: `RSI Oversold (${currentRsi}) + Strong Lower Wick Rejection`
+                lastReason: 'RSI Oversold (' + currentRsi + ') + Lower Wick Bounce'
               });
-              executeOrder('UP', true, `RSI oversold at ${currentRsi}`);
-            } else if (currentRsi > 68 && Math.random() > 0.4) {
+              executeOrder('UP', true, 'RSI oversold at ' + currentRsi);
+            } else if (currentRsi > 68 && Math.random() > 0.45) {
               setAiTelemetry({
                 rsi: currentRsi,
                 trend: 'OVERBOUGHT EXHAUSTION',
                 winRate: 86,
-                lastReason: `RSI Overbought (${currentRsi}) + Upper Resistance Rejection`
+                lastReason: 'RSI Overbought (' + currentRsi + ') + Upper Band Rejection'
               });
-              executeOrder('DOWN', true, `RSI overbought at ${currentRsi}`);
+              executeOrder('DOWN', true, 'RSI overbought at ' + currentRsi);
             } else {
-              setAiTelemetry(prevTelemetry => ({
-                ...prevTelemetry,
+              setAiTelemetry(t => ({
+                ...t,
                 rsi: currentRsi,
                 trend: currentRsi > 50 ? 'BULLISH BIAS' : 'BEARISH BIAS'
               }));
             }
           }
         }
+
         return list;
       });
+
       setCountdown(prev => (prev <= 1 ? durationSec : prev - 1));
     }, 1000);
+
     return () => clearInterval(timer);
   }, [selectedAsset, botActive, activeTrades.length, durationSec]);
-  // High-DPI Canvas Rendering Engine (Candles + EMA + Volume + Targets)
+
+  // 3. Canvas Rendering (Candlesticks, Volume, EMA, Trade Entry Lines)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || candles.length === 0) return;
+    if (!canvas || candles.length === 0 || !canvas.parentElement) return;
     const ctx = canvas.getContext('2d');
-    const width = canvas.parentElement.clientWidth;
-    const height = canvas.parentElement.clientHeight;
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const width = canvas.parentElement.clientWidth || 800;
+    const height = canvas.parentElement.clientHeight || 500;
+
+    canvas.width = width * (window.devicePixelRatio || 1);
+    canvas.height = height * (window.devicePixelRatio || 1);
+    ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
     ctx.fillStyle = '#131518';
     ctx.fillRect(0, 0, width, height);
-    // 1. Grid Lines
+
+    // Background Grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
     for (let y = 30; y < height; y += 45) {
@@ -180,7 +203,7 @@ export default function App() {
       ctx.lineTo(x, height);
       ctx.stroke();
     }
-    // 2. Dynamic Price Scaling
+
     let minP = Infinity;
     let maxP = -Infinity;
     candles.forEach(c => {
@@ -190,10 +213,12 @@ export default function App() {
     const padding = (maxP - minP) * 0.18 || 0.001;
     minP -= padding;
     maxP += padding;
-    const chartHeight = height - 90; // Top section for price action
+
+    const chartHeight = height - 90;
     const getY = (price) => chartHeight - ((price - minP) / (maxP - minP)) * chartHeight + 20;
     const candleWidth = Math.max(3, (width - 160) / candles.length - 3);
-    // 3. Bottom Volume Histogram Sub-chart
+
+    // Volume Sub-chart
     const maxVol = Math.max(...candles.map(c => c.volume || 1000));
     candles.forEach((c, i) => {
       const x = i * (candleWidth + 3) + 20;
@@ -201,10 +226,11 @@ export default function App() {
       ctx.fillStyle = c.close >= c.open ? 'rgba(0, 230, 118, 0.22)' : 'rgba(255, 51, 102, 0.22)';
       ctx.fillRect(x, height - vH - 10, candleWidth, vH);
     });
-    // 4. EMA 20 Dynamic Smoothing Overlay
+
+    // EMA 20 Overlay Line
     if (candles.length > 5) {
       ctx.beginPath();
-      let k = 2 / (20 + 1);
+      const k = 2 / (20 + 1);
       let ema = candles[0].close;
       candles.forEach((c, i) => {
         ema = c.close * k + ema * (1 - k);
@@ -217,7 +243,8 @@ export default function App() {
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
-    // 5. Candlesticks / Area / Line
+
+    // Chart Style
     if (chartType === 'area' || chartType === 'line') {
       ctx.beginPath();
       candles.forEach((c, i) => {
@@ -226,6 +253,7 @@ export default function App() {
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
+
       if (chartType === 'area') {
         const lastX = (candles.length - 1) * (candleWidth + 3) + 20 + candleWidth / 2;
         const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
@@ -236,6 +264,7 @@ export default function App() {
         ctx.fillStyle = gradient;
         ctx.fill();
       }
+
       ctx.strokeStyle = '#00e676';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -244,22 +273,24 @@ export default function App() {
         const x = i * (candleWidth + 3) + 20;
         const isUp = c.close >= c.open;
         const color = isUp ? '#00e676' : '#ff3366';
-        // Wick
+
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, getY(c.high));
         ctx.lineTo(x + candleWidth / 2, getY(c.low));
         ctx.stroke();
-        // Body
+
         const topY = getY(Math.max(c.open, c.close));
         const bottomY = getY(Math.min(c.open, c.close));
         const bodyH = Math.max(2, bottomY - topY);
+
         ctx.fillStyle = color;
         ctx.fillRect(x, topY, candleWidth, bodyH);
       });
     }
-    // 6. Glowing Real-Time Price Line
+
+    // Price Guideline
     const curY = getY(latestPrice);
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = '#00e676';
@@ -269,25 +300,29 @@ export default function App() {
     ctx.lineTo(width, curY);
     ctx.stroke();
     ctx.setLineDash([]);
-    // 7. Render Executed Order Badges & Live Targets
+
+    // Live Trade Pins and Entry Lines
     activeTrades.forEach(tr => {
       const trY = getY(tr.entry);
       ctx.fillStyle = tr.direction === 'UP' ? '#00e676' : '#ff3366';
       ctx.beginPath();
       ctx.arc(width - 130, trY, 6, 0, Math.PI * 2);
       ctx.fill();
-      // Horizontal Entry Line
+
       ctx.strokeStyle = tr.direction === 'UP' ? 'rgba(0, 230, 118, 0.6)' : 'rgba(255, 51, 102, 0.6)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(width - 220, trY);
       ctx.lineTo(width - 30, trY);
       ctx.stroke();
+
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(`${tr.isAi ? 'AI ' : ''}${tr.direction} ${tr.amount}`, width - 118, trY + 4);
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText((tr.isAi ? 'AI ' : '') + tr.direction + ' ' + tr.amount, width - 118, trY + 4);
     });
+
   }, [candles, latestPrice, chartType, activeTrades]);
+
   const executeOrder = (direction, isAi = false, reason = 'Manual Order') => {
     const entry = latestPrice;
     const newTrade = {
@@ -299,27 +334,33 @@ export default function App() {
       isAi,
       reason
     };
+
     setActiveTrades(prev => [...prev, newTrade]);
     setRecentSocialTrades(prev => [
-      { id: Date.now(), user: isAi ? 'AI Quant Engine' : 'You', dir: direction, duration: `${durationSec}s` },
+      { id: Date.now(), user: isAi ? 'AI Quant Engine' : 'You', dir: direction, duration: durationSec + 's' },
       ...prev.slice(0, 3)
     ]);
+
     setTimeout(() => {
       const exitPrice = latestPrice;
       const win = direction === 'UP' ? exitPrice > entry : exitPrice < entry;
       const profit = win ? (amount * (selectedAsset.payout / 100)) : -amount;
-      setBalance(b => +(b + profit).toFixed(2));
+
+      setBalance(b => Number((b + profit).toFixed(2)));
       setActiveTrades(prev => prev.filter(t => t.id !== newTrade.id));
     }, durationSec * 1000);
   };
+
   const filteredAssets = ALL_MARKETS.filter(item => {
     const matchesCategory = marketFilter === 'ALL' || item.country === marketFilter || item.category === marketFilter;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
   return (
     <div className="flex h-screen w-screen bg-[#0e1013] text-[#e6edf3] font-sans overflow-hidden select-none">
-      {/* 1. LEFT NARROW ICON DOCK */}
+      
+      {/* 1. LEFT DOCK */}
       <div className="w-14 bg-[#131518] border-r border-[#1d2229] flex flex-col justify-between items-center py-4 z-20">
         <div className="flex flex-col items-center gap-6">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00e676] to-[#00b0ff] flex items-center justify-center shadow-lg shadow-[#00e676]/20 font-black text-black text-lg">
@@ -334,10 +375,11 @@ export default function App() {
             Trades
           </button>
           <button className="text-gray-400 hover:text-white flex flex-col items-center gap-1 text-[10px]">
-            <BarChart2 size={18} />
+            <Activity size={18} />
             Market
           </button>
         </div>
+
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="text-[10px] text-gray-500 font-mono">
             <span className="inline-block w-2 h-2 rounded-full bg-[#00e676] mr-1 animate-pulse"></span>
@@ -348,9 +390,11 @@ export default function App() {
           </button>
         </div>
       </div>
-      {/* 2. MAIN CENTER TERMINAL */}
+
+      {/* 2. CENTER TERMINAL */}
       <div className="flex-1 flex flex-col relative">
-        {/* TOP BAR: Asset Selector, Account Balance, Autopilot */}
+        
+        {/* TOP BAR */}
         <div className="h-14 bg-[#131518] border-b border-[#1d2229] px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex bg-[#1a1e24] p-1 rounded-lg text-xs font-semibold">
@@ -358,6 +402,7 @@ export default function App() {
               <button className="px-3 py-1 rounded text-gray-400 hover:text-white">Forex</button>
               <button className="px-3 py-1 rounded text-gray-400 hover:text-white">Stocks</button>
             </div>
+
             <button 
               onClick={() => setIsAssetModalOpen(true)}
               className="flex items-center gap-2.5 bg-[#1a1e24] hover:bg-[#252b35] border border-[#2e3744] px-3.5 py-1.5 rounded-xl transition"
@@ -372,17 +417,19 @@ export default function App() {
               <Plus size={16} className="text-gray-400 ml-1" />
             </button>
           </div>
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-[#1a1e24] border border-[#2a313d] px-3 py-1.5 rounded-xl">
               <Bot size={16} className={botActive ? "text-[#00e676] animate-pulse" : "text-gray-400"} />
               <span className="text-xs font-bold text-gray-300">AI Autopilot</span>
               <button 
                 onClick={() => setBotActive(!botActive)}
-                className={`w-8 h-4 rounded-full p-0.5 transition-colors ${botActive ? 'bg-[#00e676]' : 'bg-gray-600'}`}
+                className={'w-8 h-4 rounded-full p-0.5 transition-colors ' + (botActive ? 'bg-[#00e676]' : 'bg-gray-600')}
               >
-                <div className={`w-3 h-3 bg-black rounded-full transition-transform ${botActive ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                <div className={'w-3 h-3 bg-black rounded-full transition-transform ' + (botActive ? 'translate-x-4' : 'translate-x-0')}></div>
               </button>
             </div>
+
             <div className="text-right">
               <div className="text-[10px] text-gray-400 flex items-center justify-end gap-1">
                 <span>INR Demo Account</span>
@@ -392,15 +439,18 @@ export default function App() {
                 ₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
+
             <button className="bg-[#00e676] hover:bg-[#00c853] text-black font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-[#00e676]/20 transition">
               <Wallet size={14} /> Payments
             </button>
           </div>
         </div>
+
         {/* CHART VIEWPORT */}
         <div className="flex-1 relative w-full h-full overflow-hidden">
           <canvas ref={canvasRef} className="w-full h-full block" />
-          {/* Top-Left: AI Live Signal HUD Box */}
+          
+          {/* AI Signal Matrix Box */}
           <div className="absolute top-4 left-6 z-10 bg-[#131518]/90 backdrop-blur border border-[#2a313d] rounded-2xl p-3 flex items-center gap-4 shadow-xl">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-[#00e676] animate-pulse" />
@@ -412,7 +462,7 @@ export default function App() {
             <div className="h-6 w-px bg-gray-700"></div>
             <div>
               <div className="text-[10px] text-gray-400 font-bold uppercase">RSI (14)</div>
-              <div className={`text-xs font-mono font-black ${aiTelemetry.rsi < 35 ? 'text-[#00e676]' : aiTelemetry.rsi > 65 ? 'text-[#ff3366]' : 'text-gray-300'}`}>
+              <div className={'text-xs font-mono font-black ' + (aiTelemetry.rsi < 35 ? 'text-[#00e676]' : aiTelemetry.rsi > 65 ? 'text-[#ff3366]' : 'text-gray-300')}>
                 {aiTelemetry.rsi}
               </div>
             </div>
@@ -422,7 +472,8 @@ export default function App() {
               <div className="text-xs font-mono font-black text-[#00e676]">{aiTelemetry.winRate}%</div>
             </div>
           </div>
-          {/* Bottom Timeframes (5s up to 5 Years) */}
+
+          {/* Timeframe Controls (5s up to 5 Years) */}
           <div className="absolute left-6 bottom-8 z-10 flex flex-col gap-2">
             <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs overflow-x-auto max-w-xl scrollbar-none">
               {TIMEFRAMES.map(tf => (
@@ -432,29 +483,27 @@ export default function App() {
                     setSelectedTf(tf);
                     setDurationSec(Math.min(tf.sec, 300));
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition whitespace-nowrap ${
-                    selectedTf.label === tf.label ? 'bg-[#2a313d] text-[#00e676]' : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={'px-2.5 py-1 rounded-lg font-bold transition whitespace-nowrap ' + (selectedTf.label === tf.label ? 'bg-[#2a313d] text-[#00e676]' : 'text-gray-400 hover:text-white')}
                 >
                   {tf.label}
                 </button>
               ))}
             </div>
+
             <div className="bg-[#1a1e24]/90 backdrop-blur border border-[#2a313d] rounded-xl p-1 flex gap-1 text-xs w-fit">
               {['candles', 'area', 'line'].map(st => (
                 <button
                   key={st}
                   onClick={() => setChartType(st)}
-                  className={`px-2.5 py-1 rounded-lg capitalize font-bold transition ${
-                    chartType === st ? 'bg-[#00e676] text-black' : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={'px-2.5 py-1 rounded-lg capitalize font-bold transition ' + (chartType === st ? 'bg-[#00e676] text-black' : 'text-gray-400 hover:text-white')}
                 >
                   {st}
                 </button>
               ))}
             </div>
           </div>
-          {/* Dotted Trade Expiration & Live Current Price Banner */}
+
+          {/* Countdown & Live Price */}
           <div className="absolute right-32 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
             <div className="border-r border-dashed border-gray-400/40 h-72 flex flex-col justify-between text-[10px] text-gray-500 pr-1">
               <span>Trade start</span>
@@ -465,21 +514,23 @@ export default function App() {
               <span>{latestPrice.toFixed(selectedAsset.step < 0.01 ? 5 : 2)}</span>
             </div>
           </div>
-          {/* Bottom Live Community Ticker */}
+
+          {/* Social Trade Stream */}
           <div className="absolute bottom-3 left-64 flex items-center gap-3 z-10 pointer-events-none">
             {recentSocialTrades.map(st => (
               <div key={st.id} className="bg-[#131518]/90 backdrop-blur border border-[#2a313d] rounded-full px-3 py-1 flex items-center gap-2 text-[11px] shadow-lg">
                 <span className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] text-white">👤</span>
                 <span className="font-semibold text-gray-300">{st.user}</span>
-                <span className={`font-black flex items-center ${st.dir === 'UP' ? 'text-[#00e676]' : 'text-[#ff3366]'}`}>
-                  {st.duration} {st.dir === 'UP' ? 'Up ↑' : 'Down ↓'}
+                <span className={'font-black flex items-center ' + (st.dir === 'UP' ? 'text-[#00e676]' : 'text-[#ff3366]')}>
+                  {st.duration + ' ' + (st.dir === 'UP' ? 'Up ↑' : 'Down ↓')}
                 </span>
               </div>
             ))}
           </div>
         </div>
       </div>
-      {/* 3. RIGHT ORDER EXECUTION PANEL */}
+
+      {/* 3. RIGHT PANEL */}
       <div className="w-80 bg-[#131518] border-l border-[#1d2229] p-5 flex flex-col justify-between z-20">
         <div className="space-y-4">
           <div className="bg-[#1a1e24] border border-[#2a313d] rounded-2xl p-3">
@@ -505,6 +556,7 @@ export default function App() {
               </button>
             </div>
           </div>
+
           <div className="bg-[#1a1e24] border border-[#2a313d] rounded-2xl p-3">
             <div className="text-[11px] text-gray-400 font-semibold mb-1">Duration</div>
             <div className="flex items-center justify-between">
@@ -523,6 +575,7 @@ export default function App() {
               </button>
             </div>
           </div>
+
           <button
             onClick={() => executeOrder('UP', false, 'Manual Up Trade')}
             className="w-full bg-[#00e676] hover:bg-[#00c853] active:scale-95 transition py-4 rounded-2xl text-black font-black text-xl flex items-center justify-between px-6 shadow-lg shadow-[#00e676]/20"
@@ -530,6 +583,7 @@ export default function App() {
             <span>Up</span>
             <TrendingUp size={28} />
           </button>
+
           <button
             onClick={() => executeOrder('DOWN', false, 'Manual Down Trade')}
             className="w-full bg-[#ff3366] hover:bg-[#e62e5c] active:scale-95 transition py-4 rounded-2xl text-white font-black text-xl flex items-center justify-between px-6 shadow-lg shadow-[#ff3366]/20"
@@ -537,6 +591,7 @@ export default function App() {
             <span>Down</span>
             <TrendingDown size={28} />
           </button>
+
           <div className="text-center pt-2">
             <span className="text-xs text-gray-400">Potential profit: </span>
             <span className="text-sm font-mono font-bold text-[#00e676]">
@@ -544,6 +599,7 @@ export default function App() {
             </span>
           </div>
         </div>
+
         <div className="bg-[#1a1e24] border border-[#2a313d] rounded-2xl p-3.5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
@@ -558,7 +614,8 @@ export default function App() {
           </div>
         </div>
       </div>
-      {/* 4. WORLDWIDE ASSET SELECTOR MODAL */}
+
+      {/* 4. ASSET MODAL */}
       {isAssetModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-[#131518] border border-[#2a313d] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -574,19 +631,19 @@ export default function App() {
                   ✕
                 </button>
               </div>
+
               <div className="flex gap-2 overflow-x-auto pb-2 text-xs font-semibold">
                 {['ALL', 'India', 'USA', 'Global', 'Crypto', 'Commodities'].map(cat => (
                   <button
                     key={cat}
                     onClick={() => setMarketFilter(cat)}
-                    className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
-                      marketFilter === cat ? 'bg-[#00e676] text-black font-black' : 'bg-[#1a1e24] text-gray-400 hover:text-white'
-                    }`}
+                    className={'px-3 py-1.5 rounded-xl whitespace-nowrap transition ' + (marketFilter === cat ? 'bg-[#00e676] text-black font-black' : 'bg-[#1a1e24] text-gray-400 hover:text-white')}
                   >
                     {cat}
                   </button>
                 ))}
               </div>
+
               <div className="relative mt-3">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
@@ -598,6 +655,7 @@ export default function App() {
                 />
               </div>
             </div>
+
             <div className="p-4 overflow-y-auto space-y-2 flex-1">
               {filteredAssets.map(asset => (
                 <div
@@ -617,6 +675,7 @@ export default function App() {
                       <div className="text-[11px] text-gray-400">{asset.country} • {asset.category}</div>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-4">
                     <span className="font-mono text-sm text-gray-300">
                       {asset.currency}{asset.base.toLocaleString()}
