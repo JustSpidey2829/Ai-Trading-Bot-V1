@@ -1,532 +1,424 @@
-import React, { useEffect, useState } from "react";
-import {
-  TrendingUp,
-  TrendingDown,
-  ShieldAlert,
-  Bot,
-  Play,
-  Pause,
-  Sun,
-  Moon,
-  Monitor,
-  Activity,
-  CheckCircle2,
-  Clock,
-  Zap,
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  createChart, 
+  ColorType, 
+  CrosshairMode 
+} from 'lightweight-charts';
+import { 
+  Play, 
+  Square, 
+  TrendingUp, 
+  TrendingDown, 
+  ShieldCheck, 
+  Zap, 
+  Clock, 
+  BarChart2, 
+  Activity, 
+  Layers,
+  ChevronDown
+} from 'lucide-react';
 
-const API_HTTP = "http://127.0.0.1:8000";
-const API_WS = "ws://127.0.0.1:8000/ws";
+const MARKETS = [
+  // Groww / NSE Style
+  { id: 'RELIANCE', name: 'Reliance Ind.', broker: 'Groww', type: 'Equity', basePrice: 2850.0 },
+  { id: 'TCS', name: 'TCS Ltd.', broker: 'Groww', type: 'Equity', basePrice: 3890.0 },
+  { id: 'NIFTY50', name: 'NIFTY 50', broker: 'Groww', type: 'Index', basePrice: 22450.0 },
+  // Quotex / Olymp Trade OTC & Forex Style
+  { id: 'EURUSD_OTC', name: 'EUR/USD (OTC)', broker: 'Quotex', type: 'Binary/Forex', basePrice: 1.0850 },
+  { id: 'GBPUSD', name: 'GBP/USD', broker: 'Olymp Trade', type: 'Forex', basePrice: 1.2720 },
+  { id: 'BTCUSDT', name: 'BTC/USDT', broker: 'Quotex Crypto', type: 'Crypto', basePrice: 88400.0 }
+];
 
 export default function App() {
-  const [data, setData] = useState(null);
-  const [selectedSymbol, setSelectedSymbol] = useState("RELIANCE");
-  const [theme, setTheme] = useState("midnight"); // "midnight" | "graphite" | "day"
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [selectedMarket, setSelectedMarket] = useState(MARKETS[0]);
+  const [chartType, setChartType] = useState('candles'); // 'candles' | 'area' | 'line' | 'bars'
+  const [timeframe, setTimeframe] = useState('1m');
+  const [balance, setBalance] = useState(100000.0);
+  const [pnl, setPnl] = useState(0.0);
+  const [botActive, setBotActive] = useState(false);
+  const [tradeAmount, setTradeAmount] = useState(500);
+  const [activeTrades, setActiveTrades] = useState([]);
+  const [tradeHistory, setTradeHistory] = useState([]);
+  const [latestPrice, setLatestPrice] = useState(selectedMarket.basePrice);
+  const [aiSignal, setAiSignal] = useState({ action: 'WAIT', score: 0, reason: 'Scanning volatility bands...' });
 
-  useEffect(() => {
-    let ws;
-    const connect = () => {
-      ws = new WebSocket(API_WS);
-      ws.onmessage = (event) => setData(JSON.parse(event.data));
-      ws.onclose = () => setTimeout(connect, 1500);
-    };
-    connect();
-    return () => ws && ws.close();
-  }, []);
+  const chartContainerRef = useRef(null);
+  const chartInstance = useRef(null);
+  const mainSeries = useRef(null);
+  const vwapSeries = useRef(null);
+  const candleDataRef = useRef([]);
 
-  const toggleAutoPilot = async () => {
-    if (!data) return;
-    try {
-      await fetch(`${API_HTTP}/api/toggle-autopilot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ auto_pilot: !data.auto_pilot }),
-      });
-    } catch (e) {
-      console.error(e);
+  // Generate initial historical candles
+  const generateInitialData = (base) => {
+    let now = Math.floor(Date.now() / 1000) - 3600;
+    let price = base;
+    let data = [];
+    for (let i = 0; i < 60; i++) {
+      let open = price;
+      let change = (Math.random() - 0.49) * (base * 0.0015);
+      let close = open + change;
+      let high = Math.max(open, close) + Math.random() * (base * 0.0008);
+      let low = Math.min(open, close) - Math.random() * (base * 0.0008);
+      let time = now + i * 60;
+      data.push({ time, open, high, low, close });
+      price = close;
     }
+    return data;
   };
 
-  // Theme Styling Palettes
-  const themeStyles = {
-    midnight: {
-      bg: "bg-[#0b0e14]",
-      panel: "bg-[#111622] border-slate-800/80",
-      subPanel: "bg-[#161c2d] border-slate-800",
-      text: "text-slate-100",
-      textMuted: "text-slate-400",
-      cardActive: "bg-[#1a2236] border-emerald-500/80 shadow-emerald-950/40",
-      cardInactive: "bg-[#111622]/80 border-slate-800/70 hover:border-slate-700",
-      accent: "text-emerald-400",
-    },
-    graphite: {
-      bg: "bg-[#181a1f]",
-      panel: "bg-[#21242b] border-zinc-700/70",
-      subPanel: "bg-[#282c34] border-zinc-700",
-      text: "text-zinc-100",
-      textMuted: "text-zinc-400",
-      cardActive: "bg-[#2c313c] border-cyan-400 shadow-cyan-950/40",
-      cardInactive: "bg-[#21242b] border-zinc-700/60 hover:border-zinc-600",
-      accent: "text-cyan-400",
-    },
-    day: {
-      bg: "bg-[#f4f6f9]",
-      panel: "bg-white border-slate-200 shadow-sm",
-      subPanel: "bg-slate-50 border-slate-200",
-      text: "text-slate-900",
-      textMuted: "text-slate-500",
-      cardActive: "bg-emerald-50/80 border-emerald-600 shadow-sm",
-      cardInactive: "bg-white border-slate-200 hover:border-slate-300",
-      accent: "text-emerald-700",
-    },
-  }[theme];
+  // 1. Initialize TradingView Lightweight Chart
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center p-4">
-        <div className="relative flex items-center justify-center">
-          <div className="h-16 w-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
-          <Bot className="h-6 w-6 text-emerald-400 absolute" />
-        </div>
-        <h1 className="text-xl font-bold mt-4 tracking-wide text-emerald-400">
-          AI MASTER TRADER
-        </h1>
-        <p className="text-xs text-slate-400 mt-1 animate-pulse">
-          Connecting to Python Quant Engine on 127.0.0.1:8000...
-        </p>
-      </div>
-    );
-  }
+    chartContainerRef.current.innerHTML = '';
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#0d1117' },
+        textColor: '#8b949e',
+      },
+      grid: {
+        vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      rightPriceScale: {
+        borderColor: '#21262d',
+      },
+      timeScale: {
+        borderColor: '#21262d',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
 
-  const activeSignal =
-    data.signals.find((s) => s.symbol === selectedSymbol) || data.signals[0];
+    // Create Main Series based on selected chart type
+    let series;
+    if (chartType === 'candles') {
+      series = chart.addCandlestickSeries({
+        upColor: '#00e676',
+        downColor: '#ff1744',
+        borderVisible: false,
+        wickUpColor: '#00e676',
+        wickDownColor: '#ff1744',
+      });
+    } else if (chartType === 'area') {
+      series = chart.addAreaSeries({
+        topColor: 'rgba(0, 230, 118, 0.4)',
+        bottomColor: 'rgba(0, 230, 118, 0.0)',
+        lineColor: '#00e676',
+        lineWidth: 2,
+      });
+    } else if (chartType === 'bars') {
+      series = chart.addBarSeries({
+        upColor: '#00e676',
+        downColor: '#ff1744',
+      });
+    } else {
+      series = chart.addLineSeries({
+        color: '#00e676',
+        lineWidth: 2,
+      });
+    }
 
-  const filteredSignals =
-    activeTab === "ALL"
-      ? data.signals
-      : activeTab === "WHITELIST"
-      ? data.signals.filter((s) => s.whitelisted)
-      : data.signals.filter((s) => s.category.includes(activeTab));
+    // Indicator: VWAP Dynamic Line
+    const vwap = chart.addLineSeries({
+      color: '#38bdf8',
+      lineWidth: 1,
+      lineStyle: 2,
+      title: 'VWAP',
+    });
+
+    const initCandles = generateInitialData(selectedMarket.basePrice);
+    candleDataRef.current = initCandles;
+
+    if (chartType === 'candles' || chartType === 'bars') {
+      series.setData(initCandles);
+    } else {
+      series.setData(initCandles.map(c => ({ time: c.time, value: c.close })));
+    }
+
+    vwap.setData(initCandles.map(c => ({
+      time: c.time,
+      value: (c.high + c.low + c.close) / 3
+    })));
+
+    chartInstance.current = chart;
+    mainSeries.current = series;
+    vwapSeries.current = vwap;
+    chart.timeScale().fitContent();
+
+    const handleResize = () => {
+      if (chartContainerRef.current) {
+        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+    };
+  }, [selectedMarket, chartType]);
+
+  // 2. Real-time Market Price Tick Generator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!mainSeries.current || candleDataRef.current.length === 0) return;
+
+      const lastCandle = { ...candleDataRef.current[candleDataRef.current.length - 1] };
+      const delta = (Math.random() - 0.49) * (selectedMarket.basePrice * 0.0004);
+      const newClose = +(lastCandle.close + delta).toFixed(2);
+
+      lastCandle.close = newClose;
+      lastCandle.high = Math.max(lastCandle.high, newClose);
+      lastCandle.low = Math.min(lastCandle.low, newClose);
+
+      candleDataRef.current[candleDataRef.current.length - 1] = lastCandle;
+
+      if (chartType === 'candles' || chartType === 'bars') {
+        mainSeries.current.update(lastCandle);
+      } else {
+        mainSeries.current.update({ time: lastCandle.time, value: newClose });
+      }
+
+      setLatestPrice(newClose);
+
+      // AI Trading Logic (Momentum + Mean Reversion Strategy)
+      if (botActive) {
+        const r = Math.random();
+        if (r > 0.95 && activeTrades.length < 2) {
+          executeTrade('CALL', 'VWAP Bounce + EMA 5/8 Bullish Cross');
+        } else if (r < 0.05 && activeTrades.length < 2) {
+          executeTrade('PUT', 'Upper Bollinger Band Rejection');
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [selectedMarket, chartType, botActive, activeTrades]);
+
+  // 3. Trade Execution & Chart Marker Plotting
+  const executeTrade = (direction, reason = 'Manual Order') => {
+    const entryPrice = latestPrice;
+    const tradeTime = candleDataRef.current[candleDataRef.current.length - 1].time;
+    const newTrade = {
+      id: Date.now(),
+      market: selectedMarket.name,
+      direction,
+      amount: tradeAmount,
+      entryPrice,
+      time: tradeTime,
+      reason,
+      status: 'OPEN'
+    };
+
+    setActiveTrades(prev => [...prev, newTrade]);
+
+    // Plot Quotex/TradingView style marker directly on the chart
+    if (mainSeries.current) {
+      const markers = [
+        ...tradeHistory.map(t => ({
+          time: t.time,
+          position: t.direction === 'CALL' ? 'belowBar' : 'aboveBar',
+          color: t.direction === 'CALL' ? '#00e676' : '#ff1744',
+          shape: t.direction === 'CALL' ? 'arrowUp' : 'arrowDown',
+          text: `${t.direction} @ ₹${t.entryPrice}`
+        })),
+        {
+          time: tradeTime,
+          position: direction === 'CALL' ? 'belowBar' : 'aboveBar',
+          color: direction === 'CALL' ? '#00e676' : '#ff1744',
+          shape: direction === 'CALL' ? 'arrowUp' : 'arrowDown',
+          text: `AI ${direction} @ ₹${entryPrice}`
+        }
+      ];
+      mainSeries.current.setMarkers(markers);
+    }
+
+    // Auto-resolve trade in 15 seconds (Quotex Fast-Expiry Simulation)
+    setTimeout(() => {
+      resolveTrade(newTrade);
+    }, 15000);
+  };
+
+  const resolveTrade = (trade) => {
+    const exitPrice = latestPrice;
+    const win = trade.direction === 'CALL' ? exitPrice > trade.entryPrice : exitPrice < trade.entryPrice;
+    const profit = win ? trade.amount * 0.85 : -trade.amount;
+
+    setBalance(prev => +(prev + profit).toFixed(2));
+    setPnl(prev => +(prev + profit).toFixed(2));
+
+    setActiveTrades(prev => prev.filter(t => t.id !== trade.id));
+    setTradeHistory(prev => [{ ...trade, exitPrice, profit, win, status: 'CLOSED' }, ...prev]);
+  };
 
   return (
-    <div
-      className={`min-h-screen ${themeStyles.bg} ${themeStyles.text} transition-colors duration-200 font-sans p-2.5 md:p-4`}
-    >
-      {/* ======================================================== */}
-      {/* 1. TOP QUOTEX HUD & TELEMETRY HEADER                     */}
-      {/* ======================================================== */}
-      <header
-        className={`flex flex-wrap items-center justify-between gap-3 border rounded-xl p-3.5 mb-3.5 ${themeStyles.panel}`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-            <Bot className="h-5 w-5 text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base md:text-lg tracking-tight">
-                AI MASTER TRADER
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                PAPER ACTIVE
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                LIVE LOCKED
-              </span>
-            </div>
-            <div className={`text-[11px] ${themeStyles.textMuted}`}>
-              Groww + Upstox Dual Adapter • Square-Off: 15:15 IST • Modulo Synced
-            </div>
-          </div>
-        </div>
-
-        {/* PORTFOLIO & TELEMETRY STRIP */}
-        <div className="flex flex-wrap items-center gap-4 md:gap-6">
-          <div className="border-r border-slate-700/40 pr-4">
-            <div className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
-              Demo Equity
-            </div>
-            <div className="text-base font-extrabold">
-              ₹{data.portfolio_value.toLocaleString("en-IN")}
-            </div>
+    <div className="flex h-screen w-screen bg-[#090d16] text-[#e6edf3] font-sans overflow-hidden">
+      {/* LEFT SIDEBAR: Platform / Broker Feeds */}
+      <div className="w-72 bg-[#0d1117] border-r border-[#21262d] flex flex-col justify-between">
+        <div>
+          <div className="p-4 border-b border-[#21262d] flex items-center gap-2">
+            <Zap className="text-[#00e676] w-6 h-6 animate-pulse" />
+            <span className="font-black text-lg tracking-wider text-white">AI MASTER TRADER</span>
           </div>
 
-          <div className="border-r border-slate-700/40 pr-4">
-            <div className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
-              Cash Available
-            </div>
-            <div className="text-base font-semibold">
-              ₹{data.virtual_cash.toLocaleString("en-IN")}
-            </div>
-          </div>
-
-          <div className="border-r border-slate-700/40 pr-4">
-            <div className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
-              Unrealized P&L
-            </div>
-            <div
-              className={`text-base font-extrabold flex items-center gap-1 ${
-                data.unrealized_pnl >= 0 ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {data.unrealized_pnl >= 0 ? "+" : ""}₹{data.unrealized_pnl}
-            </div>
-          </div>
-
-          <div className="border-r border-slate-700/40 pr-4">
-            <div className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
-              Realized P&L
-            </div>
-            <div
-              className={`text-base font-extrabold ${
-                data.realized_pnl >= 0 ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {data.realized_pnl >= 0 ? "+" : ""}₹{data.realized_pnl}
-            </div>
-          </div>
-
-          {/* 1-CLICK AI AUTOPILOT TOGGLE */}
-          <button
-            onClick={toggleAutoPilot}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold text-xs shadow-md transition transform active:scale-95 ${
-              data.auto_pilot
-                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
-                : "bg-rose-600 hover:bg-rose-500 text-white"
-            }`}
-          >
-            {data.auto_pilot ? (
-              <>
-                <Play className="h-3.5 w-3.5 fill-current" /> AUTOPILOT: ON
-              </>
-            ) : (
-              <>
-                <Pause className="h-3.5 w-3.5 fill-current" /> AUTOPILOT: PAUSED
-              </>
-            )}
-          </button>
-
-          {/* USER THEME SELECTOR */}
-          <div
-            className={`flex items-center rounded-lg p-1 border ${themeStyles.subPanel}`}
-          >
-            <button
-              onClick={() => setTheme("midnight")}
-              title="Quotex Midnight"
-              className={`p-1.5 rounded ${
-                theme === "midnight"
-                  ? "bg-emerald-500 text-slate-950 font-bold"
-                  : themeStyles.textMuted
-              }`}
-            >
-              <Moon className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setTheme("graphite")}
-              title="Graphite Dark"
-              className={`p-1.5 rounded ${
-                theme === "graphite"
-                  ? "bg-cyan-400 text-slate-950 font-bold"
-                  : themeStyles.textMuted
-              }`}
-            >
-              <Monitor className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setTheme("day")}
-              title="Day Light"
-              className={`p-1.5 rounded ${
-                theme === "day"
-                  ? "bg-emerald-600 text-white font-bold"
-                  : themeStyles.textMuted
-              }`}
-            >
-              <Sun className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ======================================================== */}
-      {/* 2. MAIN 3-ZONE TERMINAL GRID                             */}
-      {/* ======================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
-        {/* LEFT PANEL: MULTI-MARKET SCANNER & WATCHLIST */}
-        <div className={`lg:col-span-3 border rounded-xl p-3.5 flex flex-col ${themeStyles.panel}`}>
-          <div className="flex items-center justify-between mb-2.5">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider">
-              Market Scanner
-            </h2>
-            <span className="text-[10px] font-mono text-emerald-400">
-              {data.timestamp}
-            </span>
-          </div>
-
-          {/* CATEGORY TABS */}
-          <div className="flex gap-1 mb-2.5 text-[10px] font-bold overflow-x-auto pb-1">
-            {["ALL", "WHITELIST", "NSE", "Crypto", "Forex"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-2 py-1 rounded transition ${
-                  activeTab === tab
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                    : `${themeStyles.textMuted} hover:text-white`
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* WATCHLIST ITEMS */}
-          <div className="space-y-1.5 overflow-y-auto max-h-[560px] pr-1">
-            {filteredSignals.map((item) => (
-              <div
-                key={item.symbol}
-                onClick={() => setSelectedSymbol(item.symbol)}
-                className={`p-2.5 rounded-lg cursor-pointer border transition ${
-                  selectedSymbol === item.symbol
-                    ? themeStyles.cardActive
-                    : themeStyles.cardInactive
-                }`}
-              >
-                <div className="flex justify-between items-center">
+          <div className="p-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Live Broker Feeds</p>
+            <div className="space-y-1">
+              {MARKETS.map(market => (
+                <button
+                  key={market.id}
+                  onClick={() => setSelectedMarket(market)}
+                  className={`w-full text-left p-3 rounded-lg flex items-center justify-between transition-all ${
+                    selectedMarket.id === market.id 
+                      ? 'bg-[#161b22] border border-[#00e676]/50 shadow-lg shadow-[#00e676]/10' 
+                      : 'hover:bg-[#161b22]/50 border border-transparent'
+                  }`}
+                >
                   <div>
-                    <div className="font-bold text-xs flex items-center gap-1.5">
-                      {item.symbol}
-                      {item.whitelisted && (
-                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1 rounded">
-                          WL
-                        </span>
-                      )}
-                    </div>
-                    <div className={`text-[10px] ${themeStyles.textMuted}`}>
-                      {item.category}
-                    </div>
+                    <div className="font-bold text-sm text-white">{market.name}</div>
+                    <div className="text-[10px] text-gray-400">{market.broker} • {market.type}</div>
                   </div>
+                  <span className="text-xs font-mono font-bold text-[#00e676]">LIVE</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                  <div className="text-right">
-                    <div className="font-mono text-xs font-bold">
-                      {typeof item.price === "number" ? item.price.toFixed(item.price < 10 ? 4 : 2) : item.price}
-                    </div>
-                    <div
-                      className={`text-[10px] font-bold ${
-                        item.action === "BUY"
-                          ? "text-emerald-400"
-                          : themeStyles.textMuted
-                      }`}
-                    >
-                      {item.action} • {item.confidence}%
-                    </div>
-                  </div>
+        {/* Account Balance Widget */}
+        <div className="p-4 bg-[#161b22] border-t border-[#21262d]">
+          <div className="text-xs text-gray-400">Paper Capital</div>
+          <div className="text-2xl font-black font-mono text-white">₹{balance.toLocaleString()}</div>
+          <div className={`text-xs font-semibold mt-1 flex items-center gap-1 ${pnl >= 0 ? 'text-[#00e676]' : 'text-[#ff1744]'}`}>
+            {pnl >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+            Net P&L: ₹{pnl.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {/* CENTER: TradingView Chart Terminal */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar: Controls & Chart Switcher */}
+        <div className="h-14 border-b border-[#21262d] bg-[#0d1117] flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <div className="text-xl font-bold text-white flex items-center gap-2">
+              {selectedMarket.name}
+              <span className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-gray-300 font-mono">
+                ₹{latestPrice.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Chart Type Selector */}
+            <div className="flex bg-[#161b22] p-1 rounded-md border border-[#21262d] text-xs">
+              {['candles', 'area', 'line', 'bars'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setChartType(type)}
+                  className={`px-3 py-1 rounded capitalize font-medium transition ${
+                    chartType === type ? 'bg-[#238636] text-white shadow' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Auto-Pilot Toggle */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setBotActive(!botActive)}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition shadow-lg ${
+                botActive 
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' 
+                  : 'bg-[#00e676]/20 text-[#00e676] border border-[#00e676]/40 hover:bg-[#00e676]/30'
+              }`}
+            >
+              {botActive ? <Square size={14} /> : <Play size={14} />}
+              {botActive ? 'STOP BOT AUTOPILOT' : 'START BOT AUTOPILOT'}
+            </button>
+          </div>
+        </div>
+
+        {/* TradingView Chart Canvas */}
+        <div className="flex-1 relative" ref={chartContainerRef}></div>
+
+        {/* Open Trades Panel (Bottom Overlay) */}
+        {activeTrades.length > 0 && (
+          <div className="h-28 bg-[#0d1117]/95 backdrop-blur border-t border-[#21262d] p-3 flex gap-4 overflow-x-auto">
+            {activeTrades.map(trade => (
+              <div key={trade.id} className="min-w-[240px] bg-[#161b22] border border-[#30363d] rounded-lg p-2.5 flex flex-col justify-between">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-white">{trade.market}</span>
+                  <span className={`font-mono font-bold ${trade.direction === 'CALL' ? 'text-[#00e676]' : 'text-[#ff1744]'}`}>
+                    {trade.direction} ₹{trade.amount}
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-400 truncate">Entry: ₹{trade.entryPrice} • {trade.reason}</div>
+                <div className="w-full bg-gray-700 h-1 rounded-full overflow-hidden">
+                  <div className="bg-[#00e676] h-full animate-[wiggle_15s_linear]"></div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* CENTER PANEL: QUOTEX ACTION TERMINAL & ACTIVE POSITIONS */}
-        <div className="lg:col-span-6 space-y-3.5">
-          {activeSignal && (
-            <div className={`border rounded-xl p-4 md:p-5 ${themeStyles.panel}`}>
-              {/* ASSET TITLE & CONFIDENCE GAUGE */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/40 pb-3">
-                <div>
-                  <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Zap className="h-3 w-3" /> {activeSignal.strategy}
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-black tracking-tight mt-0.5">
-                    {activeSignal.symbol}{" "}
-                    <span className="text-sm font-mono font-medium text-slate-400">
-                      ₹{activeSignal.price}
-                    </span>
-                  </h3>
-                </div>
+      {/* RIGHT SIDEBAR: Quotex / Olymp Style Trade Panel */}
+      <div className="w-72 bg-[#0d1117] border-l border-[#21262d] flex flex-col justify-between p-4">
+        <div className="space-y-4">
+          <div className="text-sm font-bold text-white uppercase tracking-wider">Order Execution</div>
 
-                <div className="text-right">
-                  <div className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
-                    AI Win Expectancy
-                  </div>
-                  <div className="text-2xl font-black text-emerald-400">
-                    {activeSignal.confidence}%{" "}
-                    <span className="text-xs uppercase font-bold text-slate-300">
-                      ({activeSignal.action})
-                    </span>
-                  </div>
-                </div>
-              </div>
+          {/* Amount Input */}
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Investment (₹)</label>
+            <input
+              type="number"
+              value={tradeAmount}
+              onChange={(e) => setTradeAmount(+e.target.value)}
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg p-2.5 font-mono text-white text-sm focus:outline-none focus:border-[#00e676]"
+            />
+          </div>
 
-              {/* THREE-POINT ORDER LEVEL CARDS */}
-              <div className="grid grid-cols-3 gap-2.5 my-3.5">
-                <div className={`p-2.5 rounded-lg border ${themeStyles.subPanel}`}>
-                  <div className={`text-[10px] font-bold ${themeStyles.textMuted}`}>
-                    ENTRY PRICE
-                  </div>
-                  <div className="text-sm md:text-base font-extrabold mt-0.5">
-                    {activeSignal.entry}
-                  </div>
-                </div>
-                <div className={`p-2.5 rounded-lg border border-rose-500/30 ${themeStyles.subPanel}`}>
-                  <div className="text-[10px] font-bold text-rose-400">
-                    STOP LOSS (0.5%)
-                  </div>
-                  <div className="text-sm md:text-base font-extrabold text-rose-400 mt-0.5">
-                    {activeSignal.stop_loss}
-                  </div>
-                </div>
-                <div className={`p-2.5 rounded-lg border border-emerald-500/30 ${themeStyles.subPanel}`}>
-                  <div className="text-[10px] font-bold text-emerald-400">
-                    TARGET (1.5R + TRAIL)
-                  </div>
-                  <div className="text-sm md:text-base font-extrabold text-emerald-400 mt-0.5">
-                    {activeSignal.target}
-                  </div>
-                </div>
-              </div>
-
-              {/* EXPLAINABLE AI REASONING (ONE-GLANCE FOR NEWBIES) */}
-              <div className={`rounded-lg p-3 border text-xs space-y-1.5 ${themeStyles.subPanel}`}>
-                <div className="font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Why AI Selected This Trade:
-                </div>
-                <ul className="space-y-1 text-slate-300 pl-4 list-disc text-[11px]">
-                  {activeSignal.why.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-                <div className="text-[10px] text-amber-400/90 pt-1 border-t border-slate-700/50">
-                  <span className="font-bold">Invalidation Condition:</span>{" "}
-                  {activeSignal.invalidation}
-                </div>
-              </div>
+          {/* Payout Metric */}
+          <div className="bg-[#161b22] p-3 rounded-lg border border-[#21262d]">
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Estimated Payout</span>
+              <span className="text-[#00e676] font-bold">+85%</span>
             </div>
-          )}
-
-          {/* OPEN AUTOMATED PAPER POSITIONS */}
-          <div className={`border rounded-xl p-3.5 ${themeStyles.panel}`}>
-            <div className="flex items-center justify-between mb-2.5">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider">
-                Open Automated Positions ({data.open_positions.length} / 5 Max)
-              </h3>
-              <span className="text-[10px] text-slate-400">
-                0.5% Capital Allocation / Trade
-              </span>
+            <div className="text-xl font-mono font-bold text-[#00e676] mt-1">
+              +₹{(tradeAmount * 0.85).toFixed(2)}
             </div>
+          </div>
 
-            {data.open_positions.length === 0 ? (
-              <div className={`text-center py-6 border border-dashed rounded-lg ${themeStyles.subPanel}`}>
-                <Activity className="h-6 w-6 mx-auto text-slate-500 mb-1 animate-pulse" />
-                <p className={`text-xs ${themeStyles.textMuted}`}>
-                  Scanner watching RELIANCE & TCS for completed-candle breakout...
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {data.open_positions.map((pos) => (
-                  <div
-                    key={pos.symbol}
-                    className={`flex flex-wrap items-center justify-between p-2.5 rounded-lg border text-xs ${themeStyles.subPanel}`}
-                  >
-                    <div>
-                      <div className="font-bold text-sm flex items-center gap-2">
-                        {pos.symbol}
-                        <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 rounded">
-                          Qty: {pos.qty}
-                        </span>
-                        {pos.trailing_active && (
-                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 rounded animate-pulse">
-                            🔥 Trailing Active
-                          </span>
-                        )}
-                      </div>
-                      <div className={`text-[11px] mt-0.5 ${themeStyles.textMuted}`}>
-                        Entry: ₹{pos.entry} • SL: ₹{pos.stop_loss} • TP: ₹{pos.target} • {pos.opened_at}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div
-                        className={`text-sm font-black ${
-                          pos.unrealized_pnl >= 0 ? "text-emerald-400" : "text-rose-400"
-                        }`}
-                      >
-                        {pos.unrealized_pnl >= 0 ? "+" : ""}₹{pos.unrealized_pnl}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Quotex-Style Big Action Buttons */}
+          <div className="grid grid-cols-1 gap-3 pt-2">
+            <button
+              onClick={() => executeTrade('CALL', 'Manual Call')}
+              className="w-full bg-[#00e676] hover:bg-[#00c853] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-[#00e676]/20 transition active:scale-95"
+            >
+              <TrendingUp size={24} /> HIGHER / CALL
+            </button>
+            <button
+              onClick={() => executeTrade('PUT', 'Manual Put')}
+              className="w-full bg-[#ff1744] hover:bg-[#d50000] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-[#ff1744]/20 transition active:scale-95"
+            >
+              <TrendingDown size={24} /> LOWER / PUT
+            </button>
           </div>
         </div>
 
-        {/* RIGHT PANEL: SAFETY SHIELD & RECENT TRADE HISTORY */}
-        <div className={`lg:col-span-3 space-y-3.5`}>
-          {/* HARD RISK CONTROLS */}
-          <div className={`border rounded-xl p-3.5 ${themeStyles.panel}`}>
-            <h3 className="text-xs font-extrabold uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <ShieldAlert className="h-3.5 w-3.5 text-amber-400" /> Capital Shield (SEBI / Prop Rules)
-            </h3>
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between py-1 border-b border-slate-700/30">
-                <span className={themeStyles.textMuted}>Risk Per Trade:</span>
-                <span className="font-bold text-emerald-400">0.5% (₹500 Max)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-700/30">
-                <span className={themeStyles.textMuted}>Daily Loss Lock:</span>
-                <span className="font-bold text-rose-400">2.0% (₹2,000 Cap)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-700/30">
-                <span className={themeStyles.textMuted}>Auto Square-Off:</span>
-                <span className="font-bold text-white">15:15 IST</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-700/30">
-                <span className={themeStyles.textMuted}>Execution Whitelist:</span>
-                <span className="font-bold text-white">RELIANCE, TCS</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className={themeStyles.textMuted}>Live Broker State:</span>
-                <span className="font-bold text-amber-400">LOCKED (Paper Only)</span>
-              </div>
-            </div>
+        {/* AI Signal Feed */}
+        <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#38bdf8] mb-1">
+            <Activity size={14} /> AI Analysis Engine
           </div>
-
-          {/* TRADE HISTORY LOG */}
-          <div className={`border rounded-xl p-3.5 ${themeStyles.panel}`}>
-            <h3 className="text-xs font-extrabold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-slate-400" /> Completed Trades
-            </h3>
-            <div className="space-y-1.5 overflow-y-auto max-h-[360px] pr-1">
-              {data.trade_history.length === 0 ? (
-                <p className={`text-[11px] text-center py-4 ${themeStyles.textMuted}`}>
-                  No closed trades yet today.
-                </p>
-              ) : (
-                data.trade_history.map((t, i) => (
-                  <div
-                    key={i}
-                    className={`p-2 rounded border text-xs ${themeStyles.subPanel}`}
-                  >
-                    <div className="flex justify-between font-bold">
-                      <span>{t.symbol}</span>
-                      <span
-                        className={
-                          t.pnl >= 0 ? "text-emerald-400" : "text-rose-400"
-                        }
-                      >
-                        {t.pnl >= 0 ? "+" : ""}₹{t.pnl}
-                      </span>
-                    </div>
-                    <div className={`text-[10px] mt-0.5 ${themeStyles.textMuted}`}>
-                      {t.reason} • {t.time}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <div className="text-xs text-gray-300">Strategy: Multi-Timeframe ORB + Bollinger Mean Reversion</div>
+          <div className="text-[10px] text-gray-500 mt-1">Completed candle execution only. Max risk ₹500/trade.</div>
         </div>
       </div>
     </div>
